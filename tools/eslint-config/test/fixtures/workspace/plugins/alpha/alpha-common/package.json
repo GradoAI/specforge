@@ -1,0 +1,1 @@
+{ "name": "@specforge/plugin-alpha-common", "private": true, "type": "module", "exports": { ".": "./src/index.ts" } }

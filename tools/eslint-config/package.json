@@ -1,0 +1,29 @@
+{
+  "name": "@specforge/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared ESLint flat config for the SpecForge monorepo",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@eslint/js": "10.0.1",
+    "@specforge/eslint-plugin": "workspace:*",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.13.0",
+    "typescript-eslint": "8.72.1"
+  },
+  "peerDependencies": {
+    "eslint": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "eslint": "10.13.0",
+    "typescript": "6.0.3",
+    "vitest": "4.1.12"
+  }
+}
