@@ -9,8 +9,8 @@ layers:
     status: approved
     pr: 4
   design:
-    status: in_review
+    status: approved
     pr: 5
   tasks:
-    status: not_started
+    status: in_review
     pr: null
