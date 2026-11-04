@@ -6,10 +6,10 @@ size: large
 template_version: 1
 layers:
   requirements:
-    status: in_review
+    status: approved
     pr: 4
   design:
-    status: not_started
+    status: in_review
     pr: null
   tasks:
     status: not_started
