@@ -24,7 +24,7 @@
 
 ### US-1 一键部署到 k3d（P1）
 作为平台管理员，我要用一个脚本把 SpecForge 的后端服务、数据库与迁移部署到 k3d 集群中，并且可以重复执行，以便得到与正式环境一致的开发环境。
-独立验证：在空的 k3d 集群中执行部署脚本，所有 Pod 就绪、迁移任务成功、三个后端服务的 /readyz 返回正常；再执行一次，结果不变。
+独立验证：在空的 k3d 集群中执行部署脚本，所有 Pod 就绪、迁移任务成功、三个集群内服务（sf-core-svc、sf-connect-svc、sf-portal-web）的 /readyz 返回正常；再执行一次，结果不变。
 实现它的需求条目：R-platform-004、R-platform-013、R-platform-014、R-platform-008
 
 ### US-2 按统一规范新增插件（P1）
@@ -54,7 +54,7 @@
 
 ## 成功标准
 - main 上 CI 全绿，R-platform-012 列出的每项检查都在运行。
-- 在 sf-dev 中执行一键部署脚本，所有 Pod 就绪、迁移任务成功、三个后端服务的 /readyz 返回 200；重复执行一次，结果不变。
+- 在 sf-dev 中执行一键部署脚本，所有 Pod 就绪、迁移任务成功、三个集群内服务（sf-core-svc、sf-connect-svc、sf-portal-web）的 /readyz 返回 200；重复执行一次，结果不变。
 - `sf spec validate specforge/` 对单仓现有目录通过，对每类不合格样例都报出正确的错误与位置。
 - `sf migrate` 连续执行两次，第二次没有变化；两个进程同时执行时只有一个在迁移。
 - `sf seed --dataset xinghe` 可以重复执行；设置为正式环境时拒绝执行。

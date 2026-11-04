@@ -31,23 +31,27 @@ ESLint、Prettier、TypeScript 基础配置与 commitlint 的统一配置必须�
 - THEN 检查失败
 
 ### Requirement: R-platform-003 仓库协作规则
-仓库根目录必须有 CLAUDE.md，写明本仓库的开发纪律：先规格后代码、分支与提交规则、命名规范、发现缺项时的做法；只写规则，不写方案文档的内部细节。仓库必须有 CODEOWNERS：specforge/changes/**/requirements.md 与 specforge/specs/** 归需求评审人；其余路径至少有两名所有者，使每个 PR 都有作者之外的评审人。
+仓库根目录必须有 CLAUDE.md，写明本仓库的开发纪律：先规格后代码、分支与提交规则、命名规范、发现缺项时的做法；只写规则，不写方案文档的内部细节。仓库必须有 CODEOWNERS：specforge/changes/**/requirements.md 与 specforge/specs/** 归需求评审人；.github/** 单独归 PontusAI，CI 配置的修改由人放行；其余路径至少有两名所有者，使每个 PR 都有作者之外的评审人。
 #### Scenario: R-platform-003.S1 每条路径都有作者之外的所有者
 - GIVEN 仓库中的 CODEOWNERS
 - WHEN 对仓库中的任意文件路径求所有者
-- THEN 结果非空；除需求评审人独占的路径外，所有者不少于两人
+- THEN 结果非空；除单独归属一人的路径外，所有者不少于两人
 #### Scenario: R-platform-003.S2 规格路径归需求评审人
 - GIVEN 仓库中的 CODEOWNERS
 - WHEN 对 specforge/specs/platform/spec.md 与 specforge/changes/SF-1-engineering-skeleton/requirements.md 求所有者
 - THEN 所有者为需求评审人
+#### Scenario: R-platform-003.S3 CI 配置单独归 PontusAI
+- GIVEN 仓库中的 CODEOWNERS
+- WHEN 对 .github/workflows/ci.yml 与 .github/CODEOWNERS 求所有者
+- THEN 所有者只有 PontusAI
 
 ### Requirement: R-platform-004 服务宿主
-apps/ 下必须有 sf-core-svc、sf-connect-svc、sf-node-svc、sf-portal-web、sf-dev-cli 五个宿主，都能启动。后端宿主（sf-core-svc、sf-connect-svc、sf-node-svc）必须用 Fastify 5 提供 HTTP，用 Awilix 为每个后端插件建立隔离的依赖注入容器并装配插件，用 pino 输出结构化日志，并提供 /healthz（进程存活）与 /readyz（依赖就绪，含数据库连接）。sf-portal-web 也必须提供 /healthz 与 /readyz。
-#### Scenario: R-platform-004.S1 依赖就绪时 readyz 正常
+apps/ 下必须有 sf-core-svc、sf-connect-svc、sf-node-svc、sf-portal-web、sf-dev-cli 五个宿主，都能启动。后端宿主（sf-core-svc、sf-connect-svc、sf-node-svc）必须用 Fastify 5 提供 HTTP，用 Awilix 为每个后端插件建立隔离的依赖注入容器并装配插件，用 pino 输出结构化日志，并提供 /healthz（进程存活）与 /readyz（依赖就绪）。只有 sf-core-svc 的 /readyz 检查数据库；sf-connect-svc 的 /readyz 检查能否连到 sf-core-svc，不直连数据库；sf-node-svc 没有数据库，/readyz 只检查进程内初始化完成。sf-portal-web 也必须提供 /healthz 与 /readyz。
+#### Scenario: R-platform-004.S1 sf-core-svc 在数据库可用时就绪
 - GIVEN sf-core-svc 已启动，配置的数据库可以连接
 - WHEN 请求 GET /readyz
 - THEN 返回 200
-#### Scenario: R-platform-004.S2 数据库不可用时 readyz 失败而 healthz 正常
+#### Scenario: R-platform-004.S2 sf-core-svc 在数据库不可用时 readyz 失败而 healthz 正常
 - GIVEN sf-core-svc 已启动，配置的数据库无法连接
 - WHEN 分别请求 GET /readyz 与 GET /healthz
 - THEN /readyz 返回 503，/healthz 返回 200
@@ -59,6 +63,14 @@ apps/ 下必须有 sf-core-svc、sf-connect-svc、sf-node-svc、sf-portal-web、
 - GIVEN 已完成构建
 - WHEN 启动 sf-portal-web 并请求首页与 /readyz，再执行 `sf --version`
 - THEN sf-portal-web 返回首页，/readyz 返回 200；`sf --version` 输出版本号并以 0 退出
+#### Scenario: R-platform-004.S5 sf-connect-svc 的就绪取决于 sf-core-svc
+- GIVEN sf-connect-svc 已启动，没有配置任何数据库连接
+- WHEN sf-core-svc 可以连接时请求 GET /readyz，再停止 sf-core-svc 后分别请求 GET /readyz 与 GET /healthz
+- THEN 第一次 /readyz 返回 200；停止后 /readyz 返回 503，/healthz 返回 200
+#### Scenario: R-platform-004.S6 sf-node-svc 在初始化完成后就绪
+- GIVEN sf-node-svc 已启动，没有配置任何数据库连接
+- WHEN 进程内初始化完成后分别请求 GET /readyz 与 GET /healthz
+- THEN 两者都返回 200
 
 ### Requirement: R-platform-005 后端插件框架基础包
 packages/ 下必须有 backend-plugin-api、backend-defaults、contracts-core、test-utils、cli-templates、frontend-plugin-api、frontend-app、ui 八个基础包。backend-plugin-api 必须能定义后端插件、插件模块、服务引用与扩展点，插件声明自己依赖的服务。backend-defaults 必须实现配置、日志、数据库三项默认服务，其余默认服务只定义接口。frontend-plugin-api、frontend-app、ui 只需建包并提供占位导出。
@@ -87,7 +99,7 @@ packages/ 下必须有 backend-plugin-api、backend-defaults、contracts-core、
 - THEN 命令以非零状态退出，已有文件不变
 
 ### Requirement: R-platform-007 数据库表规范与样例表
-每个后端插件必须使用一个以插件名命名的 PostgreSQL schema，表在插件的 infrastructure 层用 Drizzle 定义，迁移放在插件的 migrations/ 中。必须提供带类别前缀的 ULID 生成与校验工具，以及按表设计模板生成主键检查约束的写法。identity.organization 必须作为表设计模板的样例实现：标准列、命名、检查约束、行级安全与注释齐全。
+每个后端插件必须使用一个以插件名命名的 PostgreSQL schema，表在插件的 infrastructure 层用 Drizzle 定义，迁移放在插件的 migrations/ 中。必须提供带类别前缀的 ULID 生成与校验工具，以及按表设计模板生成主键检查约束的写法。identity.organization 必须作为表设计模板的样例实现：标准列、命名、检查约束、注释齐全，行级安全同时启用 ENABLE 与 FORCE ROW LEVEL SECURITY；服务必须使用不拥有表的数据库角色连接。
 #### Scenario: R-platform-007.S1 生成带前缀的标识
 - GIVEN 类别前缀 org
 - WHEN 调用标识生成工具
@@ -97,7 +109,7 @@ packages/ 下必须有 backend-plugin-api、backend-defaults、contracts-core、
 - WHEN 向 identity.organization 插入 id 为 wrk_ 开头的行
 - THEN 插入因检查约束 ck_organization_id 失败
 #### Scenario: R-platform-007.S3 行级安全按组织隔离
-- GIVEN identity.organization 中有两个组织的行
+- GIVEN 以服务使用的非所有者角色连接，identity.organization 中有两个组织的行
 - WHEN 在会话中设置 sf.org_id 为其中一个组织后查询
 - THEN 只返回该组织的行
 
