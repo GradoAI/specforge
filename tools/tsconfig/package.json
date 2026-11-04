@@ -1,0 +1,17 @@
+{
+  "name": "@specforge/tsconfig",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared TypeScript configuration for the SpecForge monorepo",
+  "exports": {
+    "./base.json": "./tsconfig.base.json"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "vitest": "4.1.12"
+  }
+}
