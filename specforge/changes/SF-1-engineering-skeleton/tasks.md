@@ -27,6 +27,7 @@
 
 - T004 先建立 CI 基线：typecheck、lint、format、commitlint、test、changesets、spec-first、gitleaks。后续任务各自在 ci.yml 中加入本任务的作业：T005 加 license-check 与 dco，T013 加 migration-check，T014 加 spec-validate，T018 加 trivy，T019 加 nightly.yml。T004 合入后，之后的代码 PR 都受「先规格后代码」检查约束。
 - 修改 .github/ 的任务（T003、T004、T005、T013、T014、T018、T019）按 CODEOWNERS 由 PontusAI 放行。
+- 修改 specforge/specs/ 的任务（T015、T020）同样由 PontusAI 放行：CODEOWNERS 中 specforge/specs/ 归 PontusAI。T020 归档时还会移动本变更目录中的 requirements.md，该路径也归 PontusAI。
 - 许可证（T005）合入前创建的包，由 T005 一并补上 LICENSE 与 license 字段；T005 之后由脚手架按角色写入。
 - 数据库角色的落点：
   - T009：test-utils 在 Testcontainers 的 PostgreSQL 中建 `sf_owner`（BYPASSRLS）与 `sf_app`（NOBYPASSRLS）；
