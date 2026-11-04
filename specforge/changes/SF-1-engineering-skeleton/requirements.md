@@ -11,6 +11,7 @@
   - `sf` 命令行：`spec validate`、`spec archive`、`migrate`、`seed`、`plugin new`；现行规格骨架；
   - test-utils 与「星河科技」数据集中已有表的部分；
   - GitHub Actions 合并门槛与每日完整集；
+  - 许可证（根目录 AGPL-3.0，插件开发用包 Apache-2.0）与外部贡献者的 DCO 签名检查；
   - 容器镜像、Helm chart（含 CloudNativePG 与升级前迁移任务）与 k3d 一键部署脚本。
 - 不做：
   - Keycloak、可观测后端、TokenHub、备份（chart 中只留位置）；
@@ -45,7 +46,7 @@
 ### US-5 合并前由 CI 把关（P1）
 作为设计评审人与合并审批人，我要每个 PR 都自动运行合并门槛，包括「先规格后代码」与密钥扫描，以便只评审通过门槛的修改。
 独立验证：开一个引用了不存在任务的代码 PR，「先规格后代码」检查失败；开一个只改 specforge/ 的 PR，该检查通过；修改了包却没有变更说明的 PR，Changesets 检查失败。
-实现它的需求条目：R-platform-003、R-platform-012
+实现它的需求条目：R-platform-003、R-platform-012、R-platform-016
 
 ### US-6 用固定数据集测试（P2）
 作为测试编写者，我要用 `sf seed --dataset xinghe` 写入与原型一致的示例数据，可以重复执行，并且在正式环境中被拒绝，以便测试使用统一的数据且不污染正式数据。
@@ -59,6 +60,7 @@
 - `sf migrate` 连续执行两次，第二次没有变化；两个进程同时执行时只有一个在迁移。
 - `sf seed --dataset xinghe` 可以重复执行；设置为正式环境时拒绝执行。
 - 违反依赖方向的示例代码被 ESLint 拦下；不合规范的示例迁移被迁移检查拦下。
+- 根目录与插件开发用包的许可声明一致，许可声明检查与外部贡献者的 DCO 检查在 CI 中运行。
 - 本工作的变更目录已用 `sf spec archive` 归档，规格增量合并进 specforge/specs/。
 
 ## 待澄清

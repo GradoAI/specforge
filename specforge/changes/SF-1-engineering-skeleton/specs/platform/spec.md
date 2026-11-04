@@ -224,3 +224,26 @@ SF-DEV-CLI 必须基于 oclif 提供 `sf` 命令行，至少包含 `spec validat
 - GIVEN 已完成构建
 - WHEN 执行 `sf --help`
 - THEN 输出中包含 spec validate、spec archive、migrate、seed 与 plugin new
+
+### Requirement: R-platform-016 许可证与贡献签名
+仓库根目录必须放 AGPL-3.0 的 LICENSE。供插件开发使用的包（backend-plugin-api、frontend-plugin-api、contracts-core、ui、test-utils、cli-templates，以及各插件的 -common、-node、-react 包）必须各自放 Apache-2.0 的 LICENSE，并在 package.json 中声明 Apache-2.0；其余包声明 AGPL-3.0-only。声明为 Apache-2.0 的包不能依赖声明为 AGPL-3.0-only 的工作区包。CI 必须检查许可声明的一致性；外部贡献者（不是组织成员或仓库协作者）提交的 PR 中，每个提交都必须带 DCO 签名（Signed-off-by），组织成员与本仓库 GitHub App 的提交不要求。
+#### Scenario: R-platform-016.S1 许可声明与包角色一致
+- GIVEN 仓库中全部工作区包
+- WHEN 运行许可声明一致性检查
+- THEN 根目录有 AGPL-3.0 的 LICENSE；插件开发用包都有 Apache-2.0 的 LICENSE 且 license 字段为 Apache-2.0；其余包的 license 字段为 AGPL-3.0-only；检查通过
+#### Scenario: R-platform-016.S2 许可声明错误被拦下
+- GIVEN 一个 -common 包的 license 字段为 AGPL-3.0-only，或缺少 LICENSE 文件
+- WHEN 运行许可声明一致性检查
+- THEN 检查失败，指明包名与问题
+#### Scenario: R-platform-016.S3 Apache-2.0 的包依赖 AGPL 包被拦下
+- GIVEN 一个声明为 Apache-2.0 的包依赖了 backend-defaults
+- WHEN 运行许可声明一致性检查
+- THEN 检查失败，指明两个包名
+#### Scenario: R-platform-016.S4 外部贡献者缺少 DCO 签名被拦下
+- GIVEN 一个外部贡献者的 PR，其中一个提交没有 Signed-off-by
+- WHEN DCO 检查运行
+- THEN 检查失败，并列出缺少签名的提交
+#### Scenario: R-platform-016.S5 组织成员与 GitHub App 的提交不要求签名
+- GIVEN 由本仓库 GitHub App 提交、或由组织成员提交的 PR，提交没有 Signed-off-by
+- WHEN DCO 检查运行
+- THEN 检查通过
