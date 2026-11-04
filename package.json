@@ -9,10 +9,20 @@
   "scripts": {
     "build": "turbo run build",
     "test": "turbo run test",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "format": "prettier --check \"**/*.{ts,mts,cts,tsx,js,mjs,cjs,json,yml,yaml}\" --ignore-path .gitignore --ignore-path tools/prettier-config/.prettierignore",
+    "format:write": "prettier --write \"**/*.{ts,mts,cts,tsx,js,mjs,cjs,json,yml,yaml}\" --ignore-path .gitignore --ignore-path tools/prettier-config/.prettierignore",
+    "commitlint": "commitlint"
   },
   "devDependencies": {
     "@changesets/cli": "3.0.3",
+    "@commitlint/cli": "21.2.4",
+    "@specforge/commitlint-config": "workspace:*",
+    "@specforge/eslint-config": "workspace:*",
+    "@specforge/prettier-config": "workspace:*",
+    "eslint": "10.13.0",
+    "prettier": "3.9.10",
     "turbo": "2.11.10",
     "typescript": "6.0.3"
   }

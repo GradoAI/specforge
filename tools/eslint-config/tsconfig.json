@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig/tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "allowJs": true,
+    "checkJs": true,
+    "outDir": "dist",
+    "rootDir": "."
+  },
+  "include": ["src/**/*.js", "index.js", "test/**/*.test.ts", "vitest.config.ts"],
+  "exclude": ["test/fixtures"]
+}
