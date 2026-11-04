@@ -12,6 +12,9 @@
     },
     {
       "path": "tools/commitlint-config"
+    },
+    {
+      "path": "tools/scripts"
     }
   ]
 }
