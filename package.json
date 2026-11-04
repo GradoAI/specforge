@@ -1,0 +1,19 @@
+{
+  "name": "specforge",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.16.1",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "typecheck": "tsc -b"
+  },
+  "devDependencies": {
+    "@changesets/cli": "3.0.3",
+    "turbo": "2.11.10",
+    "typescript": "6.0.3"
+  }
+}

@@ -1,0 +1,11 @@
+packages:
+  - apps/*
+  - packages/*
+  - plugins/*/*
+  - tools/*
+
+# Supply chain (tech plan 2.6): only versions published at least 7 days ago are installed,
+# and dependency build scripts run only when listed in allowBuilds.
+minimumReleaseAge: 10080
+strictDepBuilds: true
+allowBuilds: {}
