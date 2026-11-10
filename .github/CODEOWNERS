@@ -1,0 +1,11 @@
+# Code owners for GradoAI/specforge. GitHub uses the last matching pattern.
+# Every path has a reviewer other than the PR author; approval roles are described in CLAUDE.md.
+
+*                                        @PontusAI @zjh1978
+
+# Requirements: current specs and the requirements layer of every change.
+/specforge/specs/                        @PontusAI
+/specforge/changes/**/requirements.md    @PontusAI
+
+# CI configuration and repository settings are released by a person.
+/.github/                                @PontusAI
