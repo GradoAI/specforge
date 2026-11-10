@@ -1,0 +1,10 @@
+# fasrun.yaml — this repository's Fasrun configuration (tech plan 2.11). Changed through code PRs.
+version: 1
+project: fasrun
+spec_root: fasrun/
+spec_template: default@1
+# Files any task may change in addition to its own scope (execution scope check, 2.11).
+shared_files:
+  - pnpm-lock.yaml
+  - tsconfig.json
+  - .changeset/

@@ -1,0 +1,63 @@
+# Fasfile — long-term constraints of the Fasrun monorepo (tech plan 2.11).
+# Changes go through a PR approved by the owners in .github/CODEOWNERS.
+# Only `version` and the top-level keys are validated until the full schema ships with the spec plugin (M1).
+version: 1
+
+principles:
+  - Spec before code; a code PR implements a merged task under fasrun/changes/ (CLAUDE.md).
+  - Plugins depend only on each other's -common, -node and -react packages; database row types stay in the infrastructure layer (tech plan 2.1).
+  - Tests never touch real tickets, repositories or accounts and never call real models (test plan 3.1).
+  - Secrets, tokens, internal host names and IP addresses are never committed; only *.example env files are.
+
+stack:
+  node: '24'
+  pnpm: '12'
+  typescript: '6.0'
+  eslint: '10.13'
+  vitest: '4.1.12'
+
+# Test plan 3.1: the merge gate of tech plan 2.3 plus the control-flow quick set and the 3.4 security cases.
+quality_gates:
+  required_checks:
+    - typecheck
+    - lint # ESLint including fasrun/dependency-direction
+    - format
+    - commitlint
+    - unit-tests
+    - integration-tests
+    - e2e-affected
+    - migration-check
+    - control-flow-quick
+    - security-cases
+    - fasrun spec validate
+    - changesets # PRs that change a package carry a changeset
+    - spec-before-code
+    - gitleaks
+  coverage:
+    application_lines: 80 # minimum line coverage of application layers
+    security_branches: 90 # validators, condition expressions, permission rules, trust propagation
+  flaky_quarantine_days: 7
+  bugfix_requires_reproducing_test: true
+  patch_release_without_migrations_or_contract_changes: true
+
+protected_paths:
+  - fasrun/changes/archive/
+
+# Changes here are always reviewed by a person (deterministic signal for risk-tiered merge, 2.14).
+high_risk_paths:
+  - .github/
+  - fasrun/specs/
+  - '**/migrations/'
+  - package.json
+  - '**/package.json'
+  - pnpm-lock.yaml
+  - pnpm-workspace.yaml
+
+agent:
+  commands:
+    - pnpm install --frozen-lockfile
+    - pnpm typecheck
+    - pnpm lint
+    - pnpm format
+    - pnpm test
+    - fasrun spec validate fasrun/
