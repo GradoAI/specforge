@@ -37,4 +37,6 @@
   - T019：Helm 托管角色的 `bypassrls` 属性。
 - 命令行的环境变量统一为 `SF_DEV_*`：`SF_DEV_MIGRATE_DATABASE_URL`、`SF_DEV_DATABASE_URL`、`SF_DEV_ENVIRONMENT`。
 - 各任务都可以同时修改根 package.json 的依赖与脚本、pnpm-lock.yaml 与 .changeset/ 中本任务的变更说明，不再逐项列出。
+- 各任务都可以同时修改根 tsconfig.json 的 references，以收录本任务新增的包。
+- 引入新检查的任务（如 T002 的 lint 与 format、T005 的许可声明检查、T013 的迁移检查）可以同时修正已合并代码中不符合该检查的部分，并在 PR 中列出这些修正。
 - T020 只修改 specforge/：用 `sf spec archive` 归档本变更目录，规格增量合并进 specforge/specs/。
