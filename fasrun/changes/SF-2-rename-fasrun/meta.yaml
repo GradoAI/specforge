@@ -1,0 +1,9 @@
+# Maintained by Fasrun (during bootstrap phase A: by hand).
+work: SF-2
+title: 改名为 Fasrun
+issue: https://github.com/fasrun/fasrun/issues/11
+size: small
+template_version: 1
+layers:
+  requirements:
+    status: in_review
