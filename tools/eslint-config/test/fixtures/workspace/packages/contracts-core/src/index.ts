@@ -1,1 +1,1 @@
-export const marker = '@specforge/contracts-core';
+export const marker = '@fasrun/contracts-core';

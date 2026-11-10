@@ -1,3 +1,3 @@
-import config from '@specforge/commitlint-config';
+import config from '@fasrun/commitlint-config';
 
 export default config;

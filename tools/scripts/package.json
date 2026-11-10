@@ -1,9 +1,9 @@
 {
-  "name": "@specforge/scripts",
+  "name": "@fasrun/scripts",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Repository checks for the SpecForge monorepo",
+  "description": "Repository checks for the Fasrun monorepo",
   "scripts": {
     "test": "vitest run"
   },

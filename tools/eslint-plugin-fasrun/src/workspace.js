@@ -15,8 +15,8 @@ export const BASE_PACKAGES = {
 };
 
 const PLUGIN_NAME =
-  /^@specforge\/plugin-(.+?)-(common|node|react|backend|web|backend-module-[a-z0-9-]+|web-module-[a-z0-9-]+)$/;
-const BASE_NAME = /^@specforge\/([a-z0-9-]+)$/;
+  /^@fasrun\/plugin-(.+?)-(common|node|react|backend|web|backend-module-[a-z0-9-]+|web-module-[a-z0-9-]+)$/;
+const BASE_NAME = /^@fasrun\/([a-z0-9-]+)$/;
 
 /**
  * @typedef {{ kind: 'plugin', name: string, plugin: string, role: string }

@@ -1,1 +1,1 @@
-export const marker = '@specforge/plugin-beta-common';
+export const marker = '@fasrun/plugin-beta-common';

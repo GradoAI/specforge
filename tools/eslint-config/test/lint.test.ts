@@ -8,7 +8,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { createConfig } from '../src/index.js';
 
 const WORKSPACE = resolve(import.meta.dirname, 'fixtures/workspace');
-const RULE = 'specforge/dependency-direction';
+const RULE = 'fasrun/dependency-direction';
 let eslint: ESLint;
 
 beforeAll(() => {
@@ -33,7 +33,7 @@ describe('dependency direction in the shared config', () => {
     const { messages, output } = await lint(file);
     expect(messages).toHaveLength(1);
     expect(messages[0]).toMatchObject({ severity: 2, line: 1 });
-    expect(messages[0]?.message).toContain('@specforge/plugin-beta-backend');
+    expect(messages[0]?.message).toContain('@fasrun/plugin-beta-backend');
     expect(output).toContain(file.split('/').pop());
     expect(output).toMatch(/1:\d+\s+error/);
     expect(output).toContain(RULE);
@@ -52,7 +52,7 @@ describe('dependency direction in the shared config', () => {
   });
 
   it('lets hosts import -backend packages for assembly', async () => {
-    expect((await lint('apps/sf-core-svc/src/index.ts')).messages).toEqual([]);
+    expect((await lint('apps/fasrun-core-svc/src/index.ts')).messages).toEqual([]);
   });
 
   it('rejects deep imports past exports, relative imports into another package, and base packages using plugins', async () => {

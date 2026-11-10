@@ -1,9 +1,9 @@
 {
-  "name": "@specforge/eslint-config",
+  "name": "@fasrun/eslint-config",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Shared ESLint flat config for the SpecForge monorepo",
+  "description": "Shared ESLint flat config for the Fasrun monorepo",
   "exports": {
     ".": "./src/index.js"
   },
@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@eslint/js": "10.0.1",
-    "@specforge/eslint-plugin": "workspace:*",
+    "@fasrun/eslint-plugin": "workspace:*",
     "eslint-config-prettier": "10.1.8",
     "globals": "17.13.0",
     "typescript-eslint": "8.72.1"

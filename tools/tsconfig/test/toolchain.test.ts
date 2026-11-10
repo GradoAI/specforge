@@ -12,10 +12,10 @@ const PNPM_VERSION = (JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), '
   .packageManager;
 const tempDirs: string[] = [];
 // A packed tarball next to the probe project; pnpm identifies it as `<name>@file:<relative path>`.
-const FIXTURE_SPEC = 'file:../sf-postinstall-fixture-1.0.0.tgz';
+const FIXTURE_SPEC = 'file:../fasrun-postinstall-fixture-1.0.0.tgz';
 
 function tempDir(prefix: string): string {
-  const dir = mkdtempSync(join(tmpdir(), `sf-${prefix}-`));
+  const dir = mkdtempSync(join(tmpdir(), `fasrun-${prefix}-`));
   tempDirs.push(dir);
   return dir;
 }
@@ -57,7 +57,7 @@ describe('monorepo toolchain', () => {
     });
 
     const head = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: REPO_ROOT, encoding: 'utf8' }).trim();
-    const clone = join(tempDir('clone'), 'specforge');
+    const clone = join(tempDir('clone'), 'fasrun');
     execFileSync('git', ['clone', '--quiet', '--no-hardlinks', REPO_ROOT, clone]);
     execFileSync('git', ['checkout', '--quiet', head], { cwd: clone });
 
@@ -76,7 +76,7 @@ describe('monorepo toolchain', () => {
       writeFileSync(
         join(fixture, 'package.json'),
         JSON.stringify({
-          name: 'sf-postinstall-fixture',
+          name: 'fasrun-postinstall-fixture',
           version: '1.0.0',
           scripts: { postinstall: `node -e "require('fs').writeFileSync('${marker}', 'ran')"` },
         }),
@@ -89,10 +89,10 @@ describe('monorepo toolchain', () => {
       writeFileSync(
         join(project, 'package.json'),
         JSON.stringify({
-          name: 'sf-postinstall-probe',
+          name: 'fasrun-postinstall-probe',
           private: true,
           packageManager: PNPM_VERSION,
-          dependencies: { 'sf-postinstall-fixture': FIXTURE_SPEC },
+          dependencies: { 'fasrun-postinstall-fixture': FIXTURE_SPEC },
         }),
       );
       writeFileSync(join(project, 'pnpm-workspace.yaml'), `${repoInstallSettings()}\n${extraSettings}`);
@@ -105,7 +105,7 @@ describe('monorepo toolchain', () => {
       expect(existsSync(marker), 'postinstall must not run').toBe(false);
       // strictDepBuilds turns the ignored build into a failed install that names the package.
       expect(status, output).not.toBe(0);
-      expect(output).toContain('sf-postinstall-fixture');
+      expect(output).toContain('fasrun-postinstall-fixture');
     });
 
     it('runs it only when the package is explicitly allowed (control)', () => {
@@ -113,7 +113,7 @@ describe('monorepo toolchain', () => {
       const { project, marker } = setup('');
       writeFileSync(
         join(project, 'pnpm-workspace.yaml'),
-        `${repoSettings}\nallowBuilds:\n  "sf-postinstall-fixture@${FIXTURE_SPEC}": true\n`,
+        `${repoSettings}\nallowBuilds:\n  "fasrun-postinstall-fixture@${FIXTURE_SPEC}": true\n`,
       );
       const { status, output } = run(project, 'pnpm', ['install']);
       expect(status, output).toBe(0);

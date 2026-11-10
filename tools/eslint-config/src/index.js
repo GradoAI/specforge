@@ -1,10 +1,10 @@
 // @ts-check
 /**
- * Shared ESLint flat config (design D-2): ESLint recommended rules, typescript-eslint, the SpecForge
+ * Shared ESLint flat config (design D-2): ESLint recommended rules, typescript-eslint, the Fasrun
  * dependency-direction rule, and eslint-config-prettier last so formatting is left to Prettier.
  */
 import js from '@eslint/js';
-import specforge from '@specforge/eslint-plugin';
+import fasrun from '@fasrun/eslint-plugin';
 import prettier from 'eslint-config-prettier';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import globals from 'globals';
@@ -20,11 +20,11 @@ export function createConfig(options = {}) {
     globalIgnores(['**/node_modules/', '**/dist/', '**/coverage/', '**/.turbo/', '**/test/fixtures/']),
     {
       files: ['**/*.{js,mjs,cjs,ts,mts,cts,tsx}'],
-      plugins: { js, specforge },
+      plugins: { js, fasrun },
       extends: ['js/recommended'],
       languageOptions: { globals: { ...globals.node } },
       rules: {
-        'specforge/dependency-direction': 'error',
+        'fasrun/dependency-direction': 'error',
       },
     },
     {
