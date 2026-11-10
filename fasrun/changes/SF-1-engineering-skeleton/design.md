@@ -8,14 +8,14 @@
 - 根目录：`pnpm-workspace.yaml` 收录 `apps/*`、`packages/*`、`plugins/*/*`、`tools/*`；`package.json` 用 `packageManager` 固定 pnpm 版本，`engines` 要求 Node.js 24；`.nvmrc` 写 24；`.npmrc` 固定 `registry=https://registry.npmjs.org/`，不依赖开发机的全局配置。
 - 供应链（2.6「依赖的供应链风险」）：`pnpm-workspace.yaml` 设 `minimumReleaseAge`（7 天）与 `strictDepBuilds`，只有 `onlyBuiltDependencies` 清单中的依赖可以执行安装脚本；依赖版本由锁文件固定，CI 用 `--frozen-lockfile`。
 - TypeScript：`tools/tsconfig` 提供 `tsconfig.base.json`（`strict`、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`、`verbatimModuleSyntax`、`module`/`moduleResolution` 为 `nodenext`），各包 `composite: true`，根 `tsconfig.json` 只列 `references`；类型检查为 `tsc -b`。TypeScript 固定在 6.0 系列：typescript-eslint 8.72 只支持到 `<6.1.0`，7.0 待其支持后再升级。
-- 构建：Turborepo 编排 `build`、`typecheck`、`lint`、`test`，`build` 依赖上游包的 `build`；库包（packages/、plugins/）用 tsdown 输出 ESM 与 `.d.ts`，`package.json` 的 `exports` 只暴露公开入口；宿主（apps/）用 tsdown 打成可执行入口，sf-portal-web 的前端用 Rsbuild。
+- 构建：Turborepo 编排 `build`、`typecheck`、`lint`、`test`，`build` 依赖上游包的 `build`；库包（packages/、plugins/）用 tsdown 输出 ESM 与 `.d.ts`，`package.json` 的 `exports` 只暴露公开入口；宿主（apps/）用 tsdown 打成可执行入口，fasrun-portal-web 的前端用 Rsbuild。
 - 版本：Changesets 独立版本；宿主与 tools/ 标为 private，不发布。
 
 ### D-2 统一代码规范与依赖方向规则
 对应需求：R-platform-002
 做法：
-- `tools/eslint-config`：flat config，含 typescript-eslint 的类型感知规则与本仓库的规则插件 `tools/eslint-plugin-specforge`；`tools/prettier-config`；`tools/commitlint-config`（扩展 config-conventional，类型限定为 feat、fix、refactor、docs、chore、test、build、ci、perf、revert）。
-- 依赖方向规则 `specforge/dependency-direction` 自己实现，不用通用插件：通用插件按目录匹配，无法表达「包角色 + 跨插件」的组合。规则读取导入方所在包与被导入包的包名（`@specforge/plugin-<插件>-<角色>` 或 `@specforge/<基础包>`），按下表判定：
+- `tools/eslint-config`：flat config，含 typescript-eslint 的类型感知规则与本仓库的规则插件 `tools/eslint-plugin-fasrun`；`tools/prettier-config`；`tools/commitlint-config`（扩展 config-conventional，类型限定为 feat、fix、refactor、docs、chore、test、build、ci、perf、revert）。
+- 依赖方向规则 `fasrun/dependency-direction` 自己实现，不用通用插件：通用插件按目录匹配，无法表达「包角色 + 跨插件」的组合。规则读取导入方所在包与被导入包的包名（`@fasrun/plugin-<插件>-<角色>` 或 `@fasrun/<基础包>`），按下表判定：
 
   | 导入方 | 可以导入 |
   | --- | --- |
@@ -27,7 +27,7 @@
   | 平台基础包 | 其他基础包；不能导入任何插件包 |
   | 宿主（apps/） | 任意包；只有宿主可以导入 `-backend`、`-backend-module-*` 以完成装配 |
 
-  另外禁止：越过 `exports` 的深层导入（如 `@specforge/plugin-x-common/src/...`）；以相对路径跨出本包目录的导入。报错信息含规则名、导入方与被导入的包名。
+  另外禁止：越过 `exports` 的深层导入（如 `@fasrun/plugin-x-common/src/...`）；以相对路径跨出本包目录的导入。报错信息含规则名、导入方与被导入的包名。
 - 违例样例只放在规则自己的测试中（ESLint 的 RuleTester 与一个测试用的临时工作区），不放进真实的插件目录。
 
 ### D-3 仓库协作规则
@@ -37,8 +37,8 @@
 - `.github/CODEOWNERS`（GitHub 取最后一条匹配的规则，顺序如下）：
   ```
   *                                        @PontusAI @zjh1978
-  /specforge/specs/                        @PontusAI
-  /specforge/changes/**/requirements.md    @PontusAI
+  /fasrun/specs/                        @PontusAI
+  /fasrun/changes/**/requirements.md    @PontusAI
   /.github/                                @PontusAI
   ```
 - CODEOWNERS 让每个 PR 都有作者之外的评审人；批准分工（见上）在自举 A 阶段靠约定执行：「其余路径」虽然列了两名所有者，代码、设计与任务层 PR 仍由 zjh1978 批准。M1 起由平台的授权记录与权限规则强制（2.6「权限检查点」）。
@@ -53,8 +53,8 @@
   - `coreServices`：rootConfig、logger、database、httpRouter，以及 2.5「平台提供的资源」中其余服务（密钥、遥测、文件存储、数据引用、鉴权、审计、事件、出站）的服务引用与接口。
 - `backend-defaults`：
   - `createBackend({ component })`：Fastify 5 实例；Awilix 根容器放 root 级服务，每个插件 `createScope()` 得到隔离的容器，plugin 级服务在各自容器中实例化；
-  - 默认服务工厂只实现三项：配置（环境变量 `SF_<组件>_<名称>`，用 Zod 校验）、日志（pino，每个插件一个带 `plugin` 字段的子日志器）、数据库（pg 连接池 + Drizzle；见 D-7）；外加 httpRouter（把插件路由挂到 `/api/<插件>/v1`）；
-  - 其余服务没有默认工厂。插件依赖它们时，启动阶段抛出 `SF_SERVICE_NOT_IMPLEMENTED`（带插件名与服务标识），进程以非零状态退出。
+  - 默认服务工厂只实现三项：配置（环境变量 `FASRUN_<组件>_<名称>`，用 Zod 校验）、日志（pino，每个插件一个带 `plugin` 字段的子日志器）、数据库（pg 连接池 + Drizzle；见 D-7）；外加 httpRouter（把插件路由挂到 `/api/<插件>/v1`）；
+  - 其余服务没有默认工厂。插件依赖它们时，启动阶段抛出 `FASRUN_SERVICE_NOT_IMPLEMENTED`（带插件名与服务标识），进程以非零状态退出。
 - `contracts-core`：`SfError`（带错误码）与错误码常量、带前缀的 ULID 工具（D-7）、分页与审计上下文的类型。
 - `frontend-plugin-api`、`frontend-app`、`ui`：建包，导出占位常量与类型，M3 实现。
 - `test-utils`、`cli-templates` 见 D-14、D-6。
@@ -64,22 +64,22 @@
 做法：
 - 三个后端宿主都由 `createBackend` 装配，入口 `src/index.ts`，插件清单 `src/plugins.ts`（由脚手架维护，见 D-6）。
 - 健康检查由宿主注册，不经插件：`/healthz` 只表示进程存活；`/readyz` 由各宿主提供的就绪检查组成：
-  - sf-core-svc：`select 1`，超时 2 秒；
-  - sf-connect-svc：请求 `SF_CONNECT_CORE_URL` 的 `/healthz`，超时 2 秒；不配置任何数据库连接；
-  - sf-node-svc：进程内初始化（插件装配）完成即就绪；不配置任何数据库连接。
+  - fasrun-core-svc：`select 1`，超时 2 秒；
+  - fasrun-connect-svc：请求 `FASRUN_CONNECT_CORE_URL` 的 `/healthz`，超时 2 秒；不配置任何数据库连接；
+  - fasrun-node-svc：进程内初始化（插件装配）完成即就绪；不配置任何数据库连接。
 - 日志：pino 输出 JSON，Fastify 的 `genReqId` 取请求头 `x-request-id`，没有则生成 ULID；每条请求日志带 `reqId`。接入 OpenTelemetry 后改为链路标识（2.8，后续里程碑）。
-- sf-portal-web：Rsbuild 构建的 React 19 占位页面；由一个 Fastify 静态服务提供页面、`/healthz` 与 `/readyz`（静态资源目录可读即就绪）。
-- sf-dev-cli 见 D-10。
+- fasrun-portal-web：Rsbuild 构建的 React 19 占位页面；由一个 Fastify 静态服务提供页面、`/healthz` 与 `/readyz`（静态资源目录可读即就绪）。
+- fasrun-dev-cli 见 D-10。
 
 ### D-6 插件脚手架
 对应需求：R-platform-006
 做法：
 - `cli-templates` 按角色提供模板目录，文件中用 `{{plugin}}`、`{{Plugin}}` 等占位符，渲染器自己实现（只做占位替换）。`-backend` 模板含 `src/starter`、`src/application`、`src/infrastructure`、`src/common`、`migrations/`、`drizzle.config.ts` 与示例测试。
-- `sf plugin new <插件> --role <角色>`：
+- `fasrun plugin new <插件> --role <角色>`：
   1. 校验插件名（`^[a-z][a-z0-9-]*$`）与角色（common、node、backend、backend-module-<名称>、web、web-module-<名称>、react），不合法时列出合法值并退出，不写文件；
   2. 目标目录已存在时拒绝；
   3. 先在临时目录渲染，全部成功后再移入 `plugins/<插件>/<插件>-<角色>`；
-  4. 注册：后端角色写入宿主 `src/plugins.ts` 中 `// sf:plugins:begin` 与 `// sf:plugins:end` 之间的导入，并把依赖加入宿主的 `package.json` 与根 `tsconfig.json` 的 `references`。宿主按插件归属选择：connect 归 sf-connect-svc，其余归 sf-core-svc；`--host` 可以指定。
+  4. 注册：后端角色写入宿主 `src/plugins.ts` 中 `// fasrun:plugins:begin` 与 `// fasrun:plugins:end` 之间的导入，并把依赖加入宿主的 `package.json` 与根 `tsconfig.json` 的 `references`。宿主按插件归属选择：connect 归 fasrun-connect-svc，其余归 fasrun-core-svc；`--host` 可以指定。
 - 九个能力域插件的 `-common` 与 `-backend` 骨架由该命令生成后提交，生成命令记录在任务的 PR 中。
 
 ### D-7 数据库表规范与样例表
@@ -88,31 +88,31 @@
 - 每个插件一个 `pgSchema('<插件>')`，表定义在 `src/infrastructure/schema/`，`drizzle.config.ts` 用 `schemaFilter` 只管理本插件的 schema，迁移输出到插件的 `migrations/`。
 - 标识：`contracts-core` 提供 `newId(prefix)`、`isId(prefix, value)`，ULID 部分用 Crockford Base32；`backend-defaults` 提供 `idCheck(column, prefix)`，生成 `ck_<表>_id` 检查约束的 SQL。
 - 数据库角色：
-  - `sf_owner`（BYPASSRLS）：拥有各插件的 schema 与表，只用于迁移与基础数据同步（D-8）。FORCE ROW LEVEL SECURITY 对表所有者同样生效，所以迁移与同步需要 BYPASSRLS；
-  - `sf_app`（NOBYPASSRLS）：服务运行时与 `sf seed`（D-15）使用，不拥有任何表，读写一律受行级安全约束。`sf migrate` 在创建 schema 后执行 `grant usage` 与 `alter default privileges ... grant select, insert, update, delete on tables to sf_app`，插件的迁移不写授权语句。
-- 行级安全：每张带 org_id 的表 `enable` 并 `force row level security`，策略为 `org_id = current_setting('sf.org_id', true)`；数据库服务提供 `withOrg(orgId, fn)`，在事务内 `set_config('sf.org_id', orgId, true)`。没有 org_id 的平台级表不建策略，按 D-9 的例外元数据声明为平台级表。
+  - `fasrun_owner`（BYPASSRLS）：拥有各插件的 schema 与表，只用于迁移与基础数据同步（D-8）。FORCE ROW LEVEL SECURITY 对表所有者同样生效，所以迁移与同步需要 BYPASSRLS；
+  - `fasrun_app`（NOBYPASSRLS）：服务运行时与 `fasrun seed`（D-15）使用，不拥有任何表，读写一律受行级安全约束。`fasrun migrate` 在创建 schema 后执行 `grant usage` 与 `alter default privileges ... grant select, insert, update, delete on tables to fasrun_app`，插件的迁移不写授权语句。
+- 行级安全：每张带 org_id 的表 `enable` 并 `force row level security`，策略为 `org_id = current_setting('fasrun.org_id', true)`；数据库服务提供 `withOrg(orgId, fn)`，在事务内 `set_config('fasrun.org_id', orgId, true)`。没有 org_id 的平台级表不建策略，按 D-9 的例外元数据声明为平台级表。
 - Drizzle 不支持 FORCE ROW LEVEL SECURITY 与 COMMENT，这两类语句写在同一插件紧随其后的自定义迁移（`drizzle-kit generate --custom`）中。
 - 样例表 `identity.organization`：id（`org_` 前缀）、org_id（与 id 相同，`ck_organization_org_id_self`）、name（text，1–200 字符）、slug（text，`uq_organization_slug`）、deactivated_at、created_at、updated_at、created_by、version；每列写 COMMENT。
 
 ### D-8 迁移执行与基础数据同步
 对应需求：R-platform-008
 做法：
-- 迁移执行器放在 `backend-defaults`，由 `sf migrate` 与 Helm 的迁移任务调用；以 `sf_owner` 连接（`SF_DEV_MIGRATE_DATABASE_URL`）。
+- 迁移执行器放在 `backend-defaults`，由 `fasrun migrate` 与 Helm 的迁移任务调用；以 `fasrun_owner` 连接（`FASRUN_MIGRATE_DATABASE_URL`）。
 - 步骤：
   1. `pg_advisory_lock(<固定键>)`，阻塞等待，持有到结束；
-  2. 按插件清单的固定顺序逐个处理；每个插件：建 schema（如不存在）、建迁移记录表 `<schema>.schema_migration`（文件名、内容哈希、执行时间）、对 `sf_app` 授权；
+  2. 按插件清单的固定顺序逐个处理；每个插件：建 schema（如不存在）、建迁移记录表 `<schema>.schema_migration`（文件名、内容哈希、执行时间）、对 `fasrun_app` 授权；
   3. 按 drizzle-kit 的 `meta/_journal.json` 顺序取未执行的迁移，每个迁移一个事务，成功后记录；已执行的迁移内容哈希变化时报错（迁移只向前）；
   4. 任一迁移失败：回滚该事务，以非零状态退出，不再处理后续插件；
-  5. 全部成功后同步基础数据（同样以 `sf_owner` 执行，靠 BYPASSRLS 写入各组织范围的基础数据），最后释放锁。
+  5. 全部成功后同步基础数据（同样以 `fasrun_owner` 执行，靠 BYPASSRLS 写入各组织范围的基础数据），最后释放锁。
 - 报告：每个插件执行了哪些迁移；没有待执行迁移时输出「没有待执行的迁移」。
-- 基础数据：插件导出带版本的定义 `{ key, version, table, keyColumn, rows, customizableColumns }`。同步用 `insert ... on conflict (<key>) do update`：SpecForge 自带的列总是更新；`customizableColumns` 只在目标行的 `is_customized` 为 false 时更新；同步记录写入 `<schema>.base_data_sync`，版本未变时跳过。
+- 基础数据：插件导出带版本的定义 `{ key, version, table, keyColumn, rows, customizableColumns }`。同步用 `insert ... on conflict (<key>) do update`：Fasrun 自带的列总是更新；`customizableColumns` 只在目标行的 `is_customized` 为 false 时更新；同步记录写入 `<schema>.base_data_sync`，版本未变时跳过。
 - M0 的示例定义与示例表只放在 test-utils 的测试插件中，证明可以重复执行、不覆盖定制，不在真实插件中新增表。
 
 ### D-9 迁移检查
 对应需求：R-platform-009
 做法：`tools/migration-check`，作为 CI 作业与本地命令运行，三步都执行，汇总后再决定退出码。
 1. squawk 检查所有迁移 SQL；规则配置在 `.squawk.toml`，被排除的规则写明理由。
-2. 用 Testcontainers 启动空的 PostgreSQL，执行 `sf migrate`；再用 drizzle-kit 计算 Drizzle 表定义与该数据库之间的差异，差异非空即失败，并列出表与列（具体命令以 drizzle-kit 当前版本的文档为准）。
+2. 用 Testcontainers 启动空的 PostgreSQL，执行 `fasrun migrate`；再用 drizzle-kit 计算 Drizzle 表定义与该数据库之间的差异，差异非空即失败，并列出表与列（具体命令以 drizzle-kit 当前版本的文档为准）。
 3. 规范检查：查询 `pg_catalog`，对各插件 schema 中的表逐条检查：
    - 约束与索引的命名前缀；
    - 标准列与类型（timestamptz、不用 varchar(n)、不用浮点类型）；
@@ -123,15 +123,15 @@
    只追加表、平台级表的例外，由表定义旁导出的元数据声明：只追加表没有 updated_at 与 version；平台级表没有 org_id，不检查行级安全与策略。每个问题指明表名，并按「创建该表的迁移文件」定位到文件。
 - 违例样例只放在检查工具自己的测试夹具中。
 
-### D-10 sf 命令行
+### D-10 fasrun 命令行
 对应需求：R-platform-015
 做法：
-- `apps/sf-dev-cli` 用 oclif（`@oclif/core`），可执行名 `sf`。
+- `apps/fasrun-dev-cli` 用 oclif（`@oclif/core`），可执行名 `fasrun`。
 - 命令与实现所在的包：
 
   | 命令 | 实现 |
   | --- | --- |
-  | `spec validate` | `@specforge/plugin-spec-common` 中的纯函数 |
+  | `spec validate` | `@fasrun/plugin-spec-common` 中的纯函数 |
   | `spec archive` | 同上 |
   | `migrate` | `backend-defaults` 的迁移执行器 |
   | `seed` | `test-utils` 的数据集 |
@@ -142,11 +142,11 @@
 ### D-11 规格自检
 对应需求：R-spec-001、R-spec-002
 做法：
-- 解析与校验放在 `@specforge/plugin-spec-common`，输入是「路径 → 文本」的映射，不直接读文件，以后 spec 后端插件与前端都可以复用。
+- 解析与校验放在 `@fasrun/plugin-spec-common`，输入是「路径 → 文本」的映射，不直接读文件，以后 spec 后端插件与前端都可以复用。
 - 解析结果带行号：
   - 现行规格的需求与场景；
   - 每个变更目录的用户场景与引用、待澄清、规格增量（四个分区）、设计条目与对应需求、任务（编号、并行标记、对应、修改范围、用例、依赖）。
-- 2.11 没有给出写法的格式，按以下约定并写入 `specforge/README.md`：
+- 2.11 没有给出写法的格式，按以下约定并写入 `fasrun/README.md`：
   - REMOVED 条目下写「原因：…」与「迁移：…」两行；
   - RENAMED 写「- FROM: R-x-001 旧名称」与「- TO: R-x-001 新名称」；
   - 任务行的「—」之后用「；」分段，每段以「对应」「修改范围」「用例」「依赖」开头。
@@ -166,18 +166,18 @@
   | SPEC_TASK_UNKNOWN_DEP | 任务依赖不存在的任务（S4） |
   | SPEC_SCOPE | 修改范围越界（S5） |
 
-- 允许的路径由 `specforge/config.yaml` 的 `allowedPaths` 声明。
+- 允许的路径由 `fasrun/config.yaml` 的 `allowedPaths` 声明。
 - `changes/archive/` 下的目录只检查格式，不检查覆盖。
 - 每类错误一个不合格样例，放在 spec-common 的测试夹具中。
 
 ### D-12 现行规格骨架
 对应需求：R-spec-003
-做法：`specforge/specs/<能力>/spec.md` 共十个能力：九个能力域加 platform。每个文件的结构为「# <能力>」、一段说明、「## Requirements」；需求条目与场景的写法与规格增量相同。自检把没有条目的「## Requirements」视为合法。
+做法：`fasrun/specs/<能力>/spec.md` 共十个能力：九个能力域加 platform。每个文件的结构为「# <能力>」、一段说明、「## Requirements」；需求条目与场景的写法与规格增量相同。自检把没有条目的「## Requirements」视为合法。
 
 ### D-13 规格归档
 对应需求：R-spec-004
 做法：
-- `sf spec archive <变更目录> [--date YYYY-MM-DD]`，日期默认取 UTC 当天。
+- `fasrun spec archive <变更目录> [--date YYYY-MM-DD]`，日期默认取 UTC 当天。
 - 步骤：
   1. 先对整个规格目录自检；
   2. 在内存中依次应用 ADDED、MODIFIED、REMOVED、RENAMED，遇到冲突即中止；
@@ -200,10 +200,10 @@
 - 定义文件在 `test-utils/src/datasets/xinghe/`，按实体分文件：组织、团队、成员、角色分配、机器、工作、执行、预算、安全策略、插件，类型由数据集模块自己定义。
 - 内容以 1.6 原型（Figma 文件）为准，实现时逐项对照原型画框；只用原型中的虚构人名。
 - 标识：示例数据的 ULID 时间部分固定为全零（如 `org_0000000000` + 16 位），既是合法的 ULID，又是固定前缀，可以按前缀整体清除。
-- `sf seed --dataset xinghe`：
+- `fasrun seed --dataset xinghe`：
   - 只写入当前已有表的部分（M0 为 identity.organization），以 upsert 写入，可以重复执行；
-  - 以 `sf_app`（`SF_DEV_DATABASE_URL`）连接，每个组织的数据在 `withOrg(<该组织>, …)` 中写入，与服务一样受行级安全约束，不使用 `sf_owner`；
-  - 环境由 `SF_DEV_ENVIRONMENT` 给出（development、test、staging、production，默认 development）；为 production 时在连接数据库前退出。
+  - 以 `fasrun_app`（`FASRUN_DATABASE_URL`）连接，每个组织的数据在 `withOrg(<该组织>, …)` 中写入，与服务一样受行级安全约束，不使用 `fasrun_owner`；
+  - 环境由 `FASRUN_ENVIRONMENT` 给出（development、test、staging、production，默认 development）；为 production 时在连接数据库前退出。
 - 数据集校验测试检查数量（组织 1、团队 4、内置角色 14、SF-1051 的执行 3）与前缀。
 
 ### D-16 CI 合并门槛与每日完整集
@@ -221,7 +221,7 @@
   | commitlint | PR 中的全部提交 |
   | test | 单元与集成测试；application 层行覆盖率阈值 80% 写在 Vitest 配置中 |
   | migration-check | D-9 |
-  | spec-validate | `sf spec validate specforge/` |
+  | spec-validate | `fasrun spec validate fasrun/` |
   | changesets | `changeset status --since=origin/main`；修改了包源码而没有 changeset 时失败 |
   | spec-first | 「先规格后代码」检查（见下） |
   | gitleaks | 用 gitleaks 命令行扫描（gitleaks-action 对组织账号需要付费许可，不使用） |
@@ -230,15 +230,15 @@
   | dco | 外部贡献者的 DCO 签名（D-19） |
 
 - spec-first 由 `tools/scripts/spec-first` 实现：
-  - 改动文件全部位于 `specforge/`、`docs/`、`*.md` 或 `.github/` 时通过；
-  - 否则要求标题匹配 `^SF-(\d+) T(\d{3})`，且 main 上存在 `specforge/changes/SF-<n>-*/tasks.md`，其中有该任务；
+  - 改动文件全部位于 `fasrun/`、`docs/`、`*.md` 或 `.github/` 时通过；
+  - 否则要求标题匹配 `^SF-(\d+) T(\d{3})`，且 main 上存在 `fasrun/changes/SF-<n>-*/tasks.md`，其中有该任务；
   - 失败时说明缺什么。
 - nightly.yml：在 ubuntu 运行器上安装 k3d 与 Helm，执行 deploy/k3d 的部署脚本与冒烟测试（三个集群内服务的 /readyz）。
 
 ### D-17 容器镜像
 对应需求：R-platform-013
 做法：
-- 每个镜像一个 Dockerfile，放在 `deploy/docker/`：sf-core-svc、sf-connect-svc、sf-portal-web，以及 sf-dev-cli（供迁移任务使用）。
+- 每个镜像一个 Dockerfile，放在 `deploy/docker/`：fasrun-core-svc、fasrun-connect-svc、fasrun-portal-web，以及 fasrun-dev-cli（供迁移任务使用）。
 - 多阶段构建：构建阶段 `node:24-bookworm-slim`，执行 `pnpm install --frozen-lockfile`、构建，再用 `pnpm deploy` 导出生产依赖；运行阶段使用 distroless 的 Node.js 24 非 root 镜像（uid 65532）。
 - 镜像标签为构建内容的哈希，内容不变则标签不变。
 
@@ -247,17 +247,17 @@
 做法：
 - 分三个 Helm release 安装，顺序固定：
   1. CloudNativePG 运营者：上游 chart，固定版本，命名空间 cnpg-system；
-  2. `deploy/helm/specforge-database`：单实例 Cluster（只建 SpecForge 数据库），用托管角色建 `sf_owner`（`bypassrls: true`）与 `sf_app`（`bypassrls: false`，即 NOBYPASSRLS），两者都不是超级用户、不能建库建角色；密码放在部署时生成的 Secret 中（不入库）；
-  3. `deploy/helm/specforge`：sf-core-svc、sf-connect-svc、sf-portal-web 与迁移任务。
+  2. `deploy/helm/fasrun-database`：单实例 Cluster（只建 Fasrun 数据库），用托管角色建 `fasrun_owner`（`bypassrls: true`）与 `fasrun_app`（`bypassrls: false`，即 NOBYPASSRLS），两者都不是超级用户、不能建库建角色；密码放在部署时生成的 Secret 中（不入库）；
+  3. `deploy/helm/fasrun`：fasrun-core-svc、fasrun-connect-svc、fasrun-portal-web 与迁移任务。
 - 拆分理由：
   - Cluster 资源依赖运营者的 CRD；
   - 迁移任务作为 `pre-install,pre-upgrade` 钩子运行时，数据库必须已经存在；
   - 放在同一个 release 中，首次安装会失败。
 - 迁移任务失败时 Helm 中止，Deployment 不更新，服务保持原版本。
 - 服务的存活探针用 /healthz，就绪探针用 /readyz。
-- 「specforge」chart 的 values 中为 Keycloak、可观测后端、TokenHub、备份留出键与说明，默认关闭，暂无模板。
+- 「fasrun」chart 的 values 中为 Keycloak、可观测后端、TokenHub、备份留出键与说明，默认关闭，暂无模板。
 - `deploy/k3d/up.sh`：
-  1. 集群 sf-dev 不存在时创建：API 端口绑定 127.0.0.1，不映射其他端口；
+  1. 集群 fasrun-dev 不存在时创建：API 端口绑定 127.0.0.1，不映射其他端口；
   2. 构建镜像并 `k3d image import`；
   3. 依次 `helm upgrade --install` 三个 release；
   4. 等待 Cluster 就绪与所有 Pod 就绪；
@@ -280,22 +280,22 @@
 - CONTRIBUTING.md 说明许可、DCO 签名方法（`git commit -s`）与插件开发用包的 Apache-2.0 例外。
 
 ## 接口与数据的变化
-- **HTTP：** sf-core-svc、sf-connect-svc、sf-node-svc、sf-portal-web 各自提供 `GET /healthz`、`GET /readyz`。
+- **HTTP：** fasrun-core-svc、fasrun-connect-svc、fasrun-node-svc、fasrun-portal-web 各自提供 `GET /healthz`、`GET /readyz`。
 - **数据库：**
   - 新建 schema identity，表 identity.organization（D-7）；
   - 每个插件 schema 中的 `schema_migration` 与 `base_data_sync`；
-  - 角色 `sf_owner`（BYPASSRLS，只用于迁移与基础数据同步）、`sf_app`（NOBYPASSRLS，服务与 `sf seed`）。
+  - 角色 `fasrun_owner`（BYPASSRLS，只用于迁移与基础数据同步）、`fasrun_app`（NOBYPASSRLS，服务与 `fasrun seed`）。
 - **环境变量：**
-  - `SF_CORE_DATABASE_URL`、`SF_CORE_PORT`；
-  - `SF_CONNECT_CORE_URL`、`SF_CONNECT_PORT`；
-  - `SF_NODE_PORT`；
-  - `SF_PORTAL_PORT`；
-  - `SF_DEV_MIGRATE_DATABASE_URL`、`SF_DEV_DATABASE_URL`、`SF_DEV_ENVIRONMENT`（2.1 命名规范：组件名 DEV 不带类型）。
-- **命令：** `sf spec validate`、`sf spec archive`、`sf migrate`、`sf seed`、`sf plugin new`。
-- **规格目录：** `specforge/config.yaml`（allowedPaths）、`specforge/README.md`（格式约定）、`specforge/specs/` 下十个能力。
+  - `FASRUN_CORE_DATABASE_URL`、`FASRUN_CORE_PORT`；
+  - `FASRUN_CONNECT_CORE_URL`、`FASRUN_CONNECT_PORT`；
+  - `FASRUN_NODE_PORT`；
+  - `FASRUN_PORTAL_PORT`；
+  - `FASRUN_MIGRATE_DATABASE_URL`、`FASRUN_DATABASE_URL`、`FASRUN_ENVIRONMENT`（2.1 命名规范：命令行读取的变量不带组件段）。
+- **命令：** `fasrun spec validate`、`fasrun spec archive`、`fasrun migrate`、`fasrun seed`、`fasrun plugin new`。
+- **规格目录：** `fasrun/config.yaml`（allowedPaths）、`fasrun/README.md`（格式约定）、`fasrun/specs/` 下十个能力。
 
 ## 影响范围
-- 新仓库的全部初始结构：apps/、packages/、plugins/、tools/、deploy/、docs/、specforge/、.github/。
+- 新仓库的全部初始结构：apps/、packages/、plugins/、tools/、deploy/、docs/、fasrun/、.github/。
 - 合并后，main 的 ruleset 需要加入 D-16 的检查名作为必须通过的检查（由 PontusAI 在 GitHub 中设置）。
 - 后续里程碑在本骨架上增加插件、表与服务；插件包角色与依赖方向规则从本工作起生效。
 
@@ -310,10 +310,10 @@
 | squawk 规则误报 | 在 `.squawk.toml` 中排除并写明理由，由设计评审人确认 |
 | 每日完整集在 Actions 中超时或资源不足 | 冒烟只部署 M0 的组件；失败时保留日志构件 |
 
-- 回退：本工作只新增文件，每个任务一个 PR；任一 PR 可以单独回退。数据库只有样例表，回退时删除 sf-dev 中的数据库即可重建。
+- 回退：本工作只新增文件，每个任务一个 PR；任一 PR 可以单独回退。数据库只有样例表，回退时删除 fasrun-dev 中的数据库即可重建。
 
 ## 项目长期约束检查
-SpecForge 单仓的项目长期约束暂以方案文档中的工程约束为准，knowledge 插件就绪后迁入。
+Fasrun 单仓的项目长期约束以根目录的 Fasfile 为准（SF-2 引入，2.11）。
 
 | 约束 | 本设计 | 是否满足 |
 | --- | --- | --- |
@@ -329,7 +329,7 @@ SpecForge 单仓的项目长期约束暂以方案文档中的工程约束为准�
 | 2.3 代码规范：类型化错误、结构化日志、测试与源码放在一起、application 层覆盖率下限 | D-4 SfError、D-5 pino、D-16 | 满足 |
 | 2.3 数据库的部署与迁移：咨询锁、每个 schema 的迁移记录、失败即停、升级前任务、迁移检查 | D-8、D-9、D-18 | 满足；「在上一版本结构上执行新迁移并跑上一版本的测试」在 M0 没有上一版本，从第一次带迁移的发布起加入 |
 | 2.3 初始数据：基础数据随迁移同步、不覆盖定制；示例数据在正式环境拒绝 | D-8、D-15 | 满足 |
-| 2.4 数据库设计规范与表设计模板 | D-7、D-9 | 满足；另加 FORCE ROW LEVEL SECURITY、非所有者的 `sf_app`（NOBYPASSRLS），`sf_owner` 的 BYPASSRLS 只用于迁移与基础数据同步 |
+| 2.4 数据库设计规范与表设计模板 | D-7、D-9 | 满足；另加 FORCE ROW LEVEL SECURITY、非所有者的 `fasrun_app`（NOBYPASSRLS），`fasrun_owner` 的 BYPASSRLS 只用于迁移与基础数据同步 |
 | 2.6 依赖的供应链风险：锁定版本、最短等待期、默认不执行安装脚本 | D-1 | 满足 |
 | 3.1 application 层行覆盖率不低于 80% | D-16 | 满足；安全相关代码的分支覆盖率要求从 M1 起适用 |
 | 公开仓库不入库密钥、令牌、内部主机名与 IP | D-3、D-16 gitleaks、D-18 Secret 在部署时生成 | 满足 |

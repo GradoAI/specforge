@@ -1,14 +1,14 @@
-# SpecForge 仓库开发纪律
+# Fasrun 仓库开发纪律
 
 本文件写给在本仓库工作的编码 agent 与开发者，只写规则。
 
 ## 先规格后代码
 
-- 每项工作一个变更目录：`specforge/changes/<工作编号>-<简述>/`。小改动有 `requirements.md` 与规格增量 `specs/<能力>/spec.md`；较大的工作依次增加 `design.md` 与 `tasks.md`。每层一个规格 PR，确认合并后才进入下一层。
+- 每项工作一个变更目录：`fasrun/changes/<工作编号>-<简述>/`。小改动有 `requirements.md` 与规格增量 `specs/<能力>/spec.md`；较大的工作依次增加 `design.md` 与 `tasks.md`。每层一个规格 PR，确认合并后才进入下一层。
 - 没有已合并的任务层规格，就没有代码 PR。一个任务一个分支、一个代码 PR，只修改任务写明的修改范围，并包含任务列出的用例。
-- 规格的格式与编号以 `specforge/` 中的约定为准：需求条目 `R-<能力>-<三位序号>`，场景 `<需求条目>.S<序号>`，用户场景 `US-<序号>`，设计条目 `D-<序号>`，任务 `T<三位序号>`。编号进入现行规格后不再变化，删除的编号不复用。
-- 提交规格 PR 前运行 `sf spec validate specforge/`，待澄清必须为空。
-- 交付后用 `sf spec archive` 把规格增量合并进 `specforge/specs/`，变更目录移入 `changes/archive/`。
+- 规格的格式与编号以 `fasrun/` 中的约定为准：需求条目 `R-<能力>-<三位序号>`，场景 `<需求条目>.S<序号>`，用户场景 `US-<序号>`，设计条目 `D-<序号>`，任务 `T<三位序号>`。编号进入现行规格后不再变化，删除的编号不复用。
+- 提交规格 PR 前运行 `fasrun spec validate fasrun/`，待澄清必须为空。
+- 交付后用 `fasrun spec archive` 把规格增量合并进 `fasrun/specs/`，变更目录移入 `changes/archive/`。
 
 ## 分支、提交与 PR
 
@@ -20,18 +20,20 @@
 
 ## 评审、批准与合并
 
-- 需求层规格 PR、修改 `.github/` 的 PR 与修改 `specforge/specs/` 的 PR 由 PontusAI 批准；设计层、任务层规格 PR 与代码 PR 由 zjh1978 批准。
+- 需求层规格 PR、修改 `.github/` 的 PR 与修改 `fasrun/specs/` 的 PR 由 PontusAI 批准；设计层、任务层规格 PR 与代码 PR 由 zjh1978 批准。
 - 批准人负责合并。agent（GitHub App）不批准、不合并，也不推送到受保护的分支。
 - 触发人不能单独批准自己的 PR；每个 PR 至少一位作者之外的评审人（见 `.github/CODEOWNERS`）。
 - 自举阶段以上分工靠约定执行；平台就绪后由授权记录与权限规则强制。
 
 ## 命名
 
-- 组件在文档与界面中写作 `SF-<组件>-<类型>`（如 SF-CORE-SVC）；目录、服务、镜像与命名空间全小写、以连字符分隔（如 sf-core-svc）。
-- 包名：插件包 `@specforge/plugin-<插件>-<角色>`，平台基础包 `@specforge/<基础包>`。
+- 组件在文档与界面中写作 `FASRUN-<组件>-<类型>`（如 FASRUN-CORE-SVC）；目录、服务、镜像与命名空间全小写、以连字符分隔（如 fasrun-core-svc）。
+- 包名：插件包 `@fasrun/plugin-<插件>-<角色>`，平台基础包 `@fasrun/<基础包>`。
 - 源码文件与目录小写、以连字符分隔；类型、类与 React 组件用大驼峰；函数与变量用小驼峰；常量全大写、以下划线分隔。
 - 数据库 schema 为插件名，表与列为小写下划线；约束与索引以 `pk_`、`fk_`、`uq_`、`ix_`、`ck_` 开头。
-- HTTP 接口 `/api/<插件>/v<主版本>/<资源复数>`；MCP 工具 `<插件>.<动词>_<名词>`；事件 `<插件>.<实体>.<过去式动词>`；环境变量 `SF_<组件>_<名称>`。
+- HTTP 接口 `/api/<插件>/v<主版本>/<资源复数>`；MCP 工具 `<插件>.<动词>_<名词>`；事件 `<插件>.<实体>.<过去式动词>`；环境变量 `FASRUN_<组件>_<名称>`，命令行读取的变量不带组件段（如 `FASRUN_ENDPOINT`、`FASRUN_CONFIG`）。
+- 命令行 `fasrun`（别名 `fas`）；仓库配置 `fasrun.yaml`、规则文件 `Fasfile`、本地覆盖 `fasrun.local.yaml`（不提交）；设计令牌 `--fasrun-<类别>-<名称>`；链路与日志属性 `fasrun.<对象>.<字段>`；Kubernetes 标签与注解前缀 `fasrun.dev/`。
+- 产品名写作 Fasrun；中文正式文档首段写「帆驭 (Fasrun)」，标题与导航写「Fasrun 帆驭」，不单独使用「帆驭」。品牌与命名以 `docs/brand-and-naming.md` 为准。
 
 ## 工程规则
 

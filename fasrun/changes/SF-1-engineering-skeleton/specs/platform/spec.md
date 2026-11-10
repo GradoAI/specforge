@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: R-platform-001 单仓结构与构建
-单仓必须是一个 pnpm 工作区，目录结构为 apps/、packages/、plugins/、tools/、deploy/、docs/ 与 specforge/；构建由 Turborepo 编排，TypeScript 以项目引用组织并全部开启严格模式，库包用 tsdown 打包，版本与变更记录由 Changesets 管理。pnpm 必须设置新版本的最短等待期，并默认不执行依赖的安装脚本。
+单仓必须是一个 pnpm 工作区，目录结构为 apps/、packages/、plugins/、tools/、deploy/、docs/ 与 fasrun/；构建由 Turborepo 编排，TypeScript 以项目引用组织并全部开启严格模式，库包用 tsdown 打包，版本与变更记录由 Changesets 管理。pnpm 必须设置新版本的最短等待期，并默认不执行依赖的安装脚本。
 #### Scenario: R-platform-001.S1 全新克隆后构建通过
 - GIVEN 一份全新克隆的仓库
 - WHEN 执行 `pnpm install --frozen-lockfile` 与 `pnpm build`
@@ -31,14 +31,14 @@ ESLint、Prettier、TypeScript 基础配置与 commitlint 的统一配置必须�
 - THEN 检查失败
 
 ### Requirement: R-platform-003 仓库协作规则
-仓库根目录必须有 CLAUDE.md，写明本仓库的开发纪律：先规格后代码、分支与提交规则、命名规范、发现缺项时的做法；只写规则，不写方案文档的内部细节。仓库必须有 CODEOWNERS：specforge/changes/**/requirements.md 与 specforge/specs/** 归需求评审人；.github/** 单独归 PontusAI，CI 配置的修改由人放行；其余路径至少有两名所有者，使每个 PR 都有作者之外的评审人。
+仓库根目录必须有 CLAUDE.md，写明本仓库的开发纪律：先规格后代码、分支与提交规则、命名规范、发现缺项时的做法；只写规则，不写方案文档的内部细节。仓库必须有 CODEOWNERS：fasrun/changes/**/requirements.md 与 fasrun/specs/** 归需求评审人；.github/** 单独归 PontusAI，CI 配置的修改由人放行；其余路径至少有两名所有者，使每个 PR 都有作者之外的评审人。
 #### Scenario: R-platform-003.S1 每条路径都有作者之外的所有者
 - GIVEN 仓库中的 CODEOWNERS
 - WHEN 对仓库中的任意文件路径求所有者
 - THEN 结果非空；除单独归属一人的路径外，所有者不少于两人
 #### Scenario: R-platform-003.S2 规格路径归需求评审人
 - GIVEN 仓库中的 CODEOWNERS
-- WHEN 对 specforge/specs/platform/spec.md 与 specforge/changes/SF-1-engineering-skeleton/requirements.md 求所有者
+- WHEN 对 fasrun/specs/platform/spec.md 与 fasrun/changes/SF-1-engineering-skeleton/requirements.md 求所有者
 - THEN 所有者为需求评审人
 #### Scenario: R-platform-003.S3 CI 配置单独归 PontusAI
 - GIVEN 仓库中的 CODEOWNERS
@@ -46,13 +46,13 @@ ESLint、Prettier、TypeScript 基础配置与 commitlint 的统一配置必须�
 - THEN 所有者只有 PontusAI
 
 ### Requirement: R-platform-004 服务宿主
-apps/ 下必须有 sf-core-svc、sf-connect-svc、sf-node-svc、sf-portal-web、sf-dev-cli 五个宿主，都能启动。后端宿主（sf-core-svc、sf-connect-svc、sf-node-svc）必须用 Fastify 5 提供 HTTP，用 Awilix 为每个后端插件建立隔离的依赖注入容器并装配插件，用 pino 输出结构化日志，并提供 /healthz（进程存活）与 /readyz（依赖就绪）。只有 sf-core-svc 的 /readyz 检查数据库；sf-connect-svc 的 /readyz 检查能否连到 sf-core-svc，不直连数据库；sf-node-svc 没有数据库，/readyz 只检查进程内初始化完成。sf-portal-web 也必须提供 /healthz 与 /readyz。
-#### Scenario: R-platform-004.S1 sf-core-svc 在数据库可用时就绪
-- GIVEN sf-core-svc 已启动，配置的数据库可以连接
+apps/ 下必须有 fasrun-core-svc、fasrun-connect-svc、fasrun-node-svc、fasrun-portal-web、fasrun-dev-cli 五个宿主，都能启动。后端宿主（fasrun-core-svc、fasrun-connect-svc、fasrun-node-svc）必须用 Fastify 5 提供 HTTP，用 Awilix 为每个后端插件建立隔离的依赖注入容器并装配插件，用 pino 输出结构化日志，并提供 /healthz（进程存活）与 /readyz（依赖就绪）。只有 fasrun-core-svc 的 /readyz 检查数据库；fasrun-connect-svc 的 /readyz 检查能否连到 fasrun-core-svc，不直连数据库；fasrun-node-svc 没有数据库，/readyz 只检查进程内初始化完成。fasrun-portal-web 也必须提供 /healthz 与 /readyz。
+#### Scenario: R-platform-004.S1 fasrun-core-svc 在数据库可用时就绪
+- GIVEN fasrun-core-svc 已启动，配置的数据库可以连接
 - WHEN 请求 GET /readyz
 - THEN 返回 200
-#### Scenario: R-platform-004.S2 sf-core-svc 在数据库不可用时 readyz 失败而 healthz 正常
-- GIVEN sf-core-svc 已启动，配置的数据库无法连接
+#### Scenario: R-platform-004.S2 fasrun-core-svc 在数据库不可用时 readyz 失败而 healthz 正常
+- GIVEN fasrun-core-svc 已启动，配置的数据库无法连接
 - WHEN 分别请求 GET /readyz 与 GET /healthz
 - THEN /readyz 返回 503，/healthz 返回 200
 #### Scenario: R-platform-004.S3 日志为结构化日志
@@ -61,14 +61,14 @@ apps/ 下必须有 sf-core-svc、sf-connect-svc、sf-node-svc、sf-portal-web、
 - THEN 标准输出中对应的日志行是 JSON，包含级别、时间、消息与请求标识
 #### Scenario: R-platform-004.S4 前端宿主与命令行可以启动
 - GIVEN 已完成构建
-- WHEN 启动 sf-portal-web 并请求首页与 /readyz，再执行 `sf --version`
-- THEN sf-portal-web 返回首页，/readyz 返回 200；`sf --version` 输出版本号并以 0 退出
-#### Scenario: R-platform-004.S5 sf-connect-svc 的就绪取决于 sf-core-svc
-- GIVEN sf-connect-svc 已启动，没有配置任何数据库连接
-- WHEN sf-core-svc 可以连接时请求 GET /readyz，再停止 sf-core-svc 后分别请求 GET /readyz 与 GET /healthz
+- WHEN 启动 fasrun-portal-web 并请求首页与 /readyz，再执行 `fasrun --version`
+- THEN fasrun-portal-web 返回首页，/readyz 返回 200；`fasrun --version` 输出版本号并以 0 退出
+#### Scenario: R-platform-004.S5 fasrun-connect-svc 的就绪取决于 fasrun-core-svc
+- GIVEN fasrun-connect-svc 已启动，没有配置任何数据库连接
+- WHEN fasrun-core-svc 可以连接时请求 GET /readyz，再停止 fasrun-core-svc 后分别请求 GET /readyz 与 GET /healthz
 - THEN 第一次 /readyz 返回 200；停止后 /readyz 返回 503，/healthz 返回 200
-#### Scenario: R-platform-004.S6 sf-node-svc 在初始化完成后就绪
-- GIVEN sf-node-svc 已启动，没有配置任何数据库连接
+#### Scenario: R-platform-004.S6 fasrun-node-svc 在初始化完成后就绪
+- GIVEN fasrun-node-svc 已启动，没有配置任何数据库连接
 - WHEN 进程内初始化完成后分别请求 GET /readyz 与 GET /healthz
 - THEN 两者都返回 200
 
@@ -84,18 +84,18 @@ packages/ 下必须有 backend-plugin-api、backend-defaults、contracts-core、
 - THEN 宿主以非零状态退出，错误中包含错误码、插件名与服务名
 
 ### Requirement: R-platform-006 插件脚手架
-`sf plugin new <插件> --role <角色>` 必须按插件包角色生成包：包名为 @specforge/plugin-<插件>-<角色>；-backend 包按 starter、application、infrastructure、common 四层生成目录并带 migrations/；生成后自动在对应的宿主中注册。九个能力域插件（entry、identity、spec、knowledge、orchestration、environment、governance、insight、connect）的 -common 与 -backend 空骨架必须由它生成。
+`fasrun plugin new <插件> --role <角色>` 必须按插件包角色生成包：包名为 @fasrun/plugin-<插件>-<角色>；-backend 包按 starter、application、infrastructure、common 四层生成目录并带 migrations/；生成后自动在对应的宿主中注册。九个能力域插件（entry、identity、spec、knowledge、orchestration、environment、governance、insight、connect）的 -common 与 -backend 空骨架必须由它生成。
 #### Scenario: R-platform-006.S1 生成并注册后端插件
 - GIVEN 一个不存在的插件名
-- WHEN 执行 `sf plugin new demo --role backend`
-- THEN 生成 plugins/demo/demo-backend，含四层目录与 migrations/；sf-core-svc 的插件注册中包含它；构建、代码检查与测试通过
+- WHEN 执行 `fasrun plugin new demo --role backend`
+- THEN 生成 plugins/demo/demo-backend，含四层目录与 migrations/；fasrun-core-svc 的插件注册中包含它；构建、代码检查与测试通过
 #### Scenario: R-platform-006.S2 角色不合法时不写入
 - GIVEN 角色为 server
-- WHEN 执行 `sf plugin new demo --role server`
+- WHEN 执行 `fasrun plugin new demo --role server`
 - THEN 命令以非零状态退出并列出合法的角色，没有写入任何文件
 #### Scenario: R-platform-006.S3 包已存在时拒绝覆盖
 - GIVEN plugins/demo/demo-backend 已存在
-- WHEN 再次执行 `sf plugin new demo --role backend`
+- WHEN 再次执行 `fasrun plugin new demo --role backend`
 - THEN 命令以非零状态退出，已有文件不变
 
 ### Requirement: R-platform-007 数据库表规范与样例表
@@ -110,27 +110,27 @@ packages/ 下必须有 backend-plugin-api、backend-defaults、contracts-core、
 - THEN 插入因检查约束 ck_organization_id 失败
 #### Scenario: R-platform-007.S3 行级安全按组织隔离
 - GIVEN 以服务使用的非所有者角色连接，identity.organization 中有两个组织的行
-- WHEN 在会话中设置 sf.org_id 为其中一个组织后查询
+- WHEN 在会话中设置 fasrun.org_id 为其中一个组织后查询
 - THEN 只返回该组织的行
 
 ### Requirement: R-platform-008 迁移执行
-`sf migrate` 必须先取得数据库的咨询锁，再逐个后端插件执行其 schema 的迁移；每个 schema 使用自己的迁移记录表；某个插件的迁移失败时立即停止并以非零状态退出，已完成的插件保持已迁移。迁移全部成功后，必须同步各插件以带版本的定义文件声明的基础数据：可以重复执行，只更新 SpecForge 自带的条目，不覆盖组织的定制。
+`fasrun migrate` 必须先取得数据库的咨询锁，再逐个后端插件执行其 schema 的迁移；每个 schema 使用自己的迁移记录表；某个插件的迁移失败时立即停止并以非零状态退出，已完成的插件保持已迁移。迁移全部成功后，必须同步各插件以带版本的定义文件声明的基础数据：可以重复执行，只更新 Fasrun 自带的条目，不覆盖组织的定制。
 #### Scenario: R-platform-008.S1 第二次执行没有变化
 - GIVEN 一个空库
-- WHEN 连续执行两次 `sf migrate`
+- WHEN 连续执行两次 `fasrun migrate`
 - THEN 第一次执行全部迁移；第二次报告没有待执行的迁移，各迁移记录表与表结构不变
 #### Scenario: R-platform-008.S2 两个进程同时执行只有一个迁移
 - GIVEN 一个空库
-- WHEN 两个 `sf migrate` 进程同时启动
+- WHEN 两个 `fasrun migrate` 进程同时启动
 - THEN 只有一个进程执行了迁移；另一个等待锁释放后报告没有待执行的迁移；每个迁移只记录一次
 #### Scenario: R-platform-008.S3 迁移失败即停
 - GIVEN 插件 B 的一个迁移包含错误的 SQL，插件按 A、B、C 的顺序执行
-- WHEN 执行 `sf migrate`
+- WHEN 执行 `fasrun migrate`
 - THEN 命令以非零状态退出；A 已迁移，B 的错误迁移未记录，C 未执行
 #### Scenario: R-platform-008.S4 基础数据同步不覆盖定制
 - GIVEN 示例的基础数据定义已同步过一次，组织修改了其中一条可定制条目
-- WHEN 再次执行 `sf migrate`
-- THEN SpecForge 自带的条目保持定义文件中的内容，被组织修改的条目保持修改后的值
+- WHEN 再次执行 `fasrun migrate`
+- THEN Fasrun 自带的条目保持定义文件中的内容，被组织修改的条目保持修改后的值
 
 ### Requirement: R-platform-009 迁移检查
 迁移检查必须：用 squawk 检查迁移 SQL，拦下会长时间锁表的操作；在空库上执行全部迁移后，结果与 Drizzle 的表定义一致；按数据库设计规范检查新增与修改的表，包括约束与索引的命名前缀（pk_、fk_、uq_、ix_、ck_）、标准列、timestamptz、不使用 varchar(n) 与浮点金额、行级安全与注释。任一项不通过时以非零状态退出，并指明迁移文件、表与违反的规则。
@@ -163,14 +163,14 @@ test-utils 必须提供测试宿主：在内存中装配后端插件，默认服
 - THEN 各自的表只出现在自己的 schema 中，两组测试都通过
 
 ### Requirement: R-platform-011 示例数据集「星河科技」
-必须以带类型的定义文件描述「星河科技」数据集：组织、四个团队、成员与 14 个内置角色、机器、工作与执行（含 SF-1051 的三次执行）、预算、安全策略与插件，内容与原型一致。示例数据的标识必须带固定前缀，可以整体清除。`sf seed --dataset xinghe` 只写入当前已有表的部分，可以重复执行；当前环境为正式环境时必须拒绝执行且不写入任何数据。
+必须以带类型的定义文件描述「星河科技」数据集：组织、四个团队、成员与 14 个内置角色、机器、工作与执行（含 SF-1051 的三次执行）、预算、安全策略与插件，内容与原型一致。示例数据的标识必须带固定前缀，可以整体清除。`fasrun seed --dataset xinghe` 只写入当前已有表的部分，可以重复执行；当前环境为正式环境时必须拒绝执行且不写入任何数据。
 #### Scenario: R-platform-011.S1 重复执行结果不变
 - GIVEN 已执行迁移的数据库
-- WHEN 连续执行两次 `sf seed --dataset xinghe`
+- WHEN 连续执行两次 `fasrun seed --dataset xinghe`
 - THEN 两次执行后各表的行数与内容相同
 #### Scenario: R-platform-011.S2 正式环境拒绝执行
 - GIVEN 环境被设置为正式环境
-- WHEN 执行 `sf seed --dataset xinghe`
+- WHEN 执行 `fasrun seed --dataset xinghe`
 - THEN 命令以非零状态退出，数据库中没有新增或修改的行
 #### Scenario: R-platform-011.S3 定义文件完整
 - GIVEN 数据集的定义文件
@@ -178,13 +178,13 @@ test-utils 必须提供测试宿主：在内存中装配后端插件，默认服
 - THEN 组织 1 个、团队 4 个、内置角色 14 个、SF-1051 的执行 3 次，且所有标识都带示例前缀
 
 ### Requirement: R-platform-012 CI 合并门槛
-每个 PR 必须在 GitHub Actions 中运行：类型检查；ESLint（含依赖方向）；Prettier 检查；commitlint；单元测试与集成测试，application 层行覆盖率不低于 80%；迁移检查；`sf spec validate specforge/`；Changesets 检查；「先规格后代码」检查；gitleaks；Trivy 依赖与镜像漏洞扫描（严重漏洞阻断）与 SBOM 生成。「先规格后代码」检查要求代码 PR 的标题引用工作编号与任务编号，且对应的变更目录与 tasks.md 中的任务已存在于 main；只修改 specforge/、文档或 CI 配置的 PR 不受此限。每日运行一次完整集：在 k3d 中部署并运行冒烟测试。所有工作流的 GITHUB_TOKEN 默认只读，需要写权限的作业单独声明。
+每个 PR 必须在 GitHub Actions 中运行：类型检查；ESLint（含依赖方向）；Prettier 检查；commitlint；单元测试与集成测试，application 层行覆盖率不低于 80%；迁移检查；`fasrun spec validate fasrun/`；Changesets 检查；「先规格后代码」检查；gitleaks；Trivy 依赖与镜像漏洞扫描（严重漏洞阻断）与 SBOM 生成。「先规格后代码」检查要求代码 PR 的标题引用工作编号与任务编号，且对应的变更目录与 tasks.md 中的任务已存在于 main；只修改 fasrun/、文档或 CI 配置的 PR 不受此限。每日运行一次完整集：在 k3d 中部署并运行冒烟测试。所有工作流的 GITHUB_TOKEN 默认只读，需要写权限的作业单独声明。
 #### Scenario: R-platform-012.S1 未引用已有任务的代码 PR 被拦下
 - GIVEN 一个修改了 packages/ 的 PR，标题为「SF-1 T999 示例」，main 的 tasks.md 中没有 T999
 - WHEN 「先规格后代码」检查运行
 - THEN 检查失败，并说明找不到的任务
 #### Scenario: R-platform-012.S2 只改规格的 PR 不受限
-- GIVEN 一个只修改 specforge/ 下文件的 PR，标题不含任务编号
+- GIVEN 一个只修改 fasrun/ 下文件的 PR，标题不含任务编号
 - WHEN 「先规格后代码」检查运行
 - THEN 检查通过
 #### Scenario: R-platform-012.S3 修改了包却没有变更说明被拦下
@@ -197,20 +197,20 @@ test-utils 必须提供测试宿主：在内存中装配后端插件，默认服
 - THEN 每个工作流在顶层声明只读权限，写权限只出现在单独声明的作业中
 
 ### Requirement: R-platform-013 容器镜像
-sf-core-svc、sf-connect-svc、sf-portal-web 与 sf migrate 所用的命令行必须各有容器镜像，用多阶段构建，以非 root 用户运行。
+fasrun-core-svc、fasrun-connect-svc、fasrun-portal-web 与 fasrun migrate 所用的命令行必须各有容器镜像，用多阶段构建，以非 root 用户运行。
 #### Scenario: R-platform-013.S1 镜像以非 root 运行
 - GIVEN 构建好的各服务镜像
 - WHEN 检查镜像配置的运行用户并在容器中执行 id -u
 - THEN 用户不是 root，id -u 的结果不为 0
 
 ### Requirement: R-platform-014 Helm 部署与 k3d 一键脚本
-必须提供 Helm chart，部署 sf-core-svc、sf-connect-svc、sf-portal-web 与 CloudNativePG（运营者与一个单实例集群，本里程碑只建 SpecForge 数据库）；`sf migrate` 作为 Helm 的升级前任务运行，全部成功后才更新服务。Keycloak、可观测后端、TokenHub 与备份在 chart 中留有位置。deploy/k3d/ 中必须有一键脚本：在 k3d 集群 sf-dev 中构建并导入镜像、安装或升级 chart，可以重复执行；所有端口只绑定 127.0.0.1。
+必须提供 Helm chart，部署 fasrun-core-svc、fasrun-connect-svc、fasrun-portal-web 与 CloudNativePG（运营者与一个单实例集群，本里程碑只建 Fasrun 数据库）；`fasrun migrate` 作为 Helm 的升级前任务运行，全部成功后才更新服务。Keycloak、可观测后端、TokenHub 与备份在 chart 中留有位置。deploy/k3d/ 中必须有一键脚本：在 k3d 集群 fasrun-dev 中构建并导入镜像、安装或升级 chart，可以重复执行；所有端口只绑定 127.0.0.1。
 #### Scenario: R-platform-014.S1 一键部署成功
-- GIVEN 一个空的 k3d 集群 sf-dev
+- GIVEN 一个空的 k3d 集群 fasrun-dev
 - WHEN 执行一键部署脚本
-- THEN 所有 Pod 就绪，迁移任务成功，sf-core-svc、sf-connect-svc 与 sf-portal-web 的 /readyz 返回 200
+- THEN 所有 Pod 就绪，迁移任务成功，fasrun-core-svc、fasrun-connect-svc 与 fasrun-portal-web 的 /readyz 返回 200
 #### Scenario: R-platform-014.S2 重复执行结果不变
-- GIVEN 已经部署成功的 sf-dev
+- GIVEN 已经部署成功的 fasrun-dev
 - WHEN 再次执行一键部署脚本
 - THEN 脚本成功；迁移任务报告没有待执行的迁移；所有 Pod 就绪，镜像与配置与上一次相同
 #### Scenario: R-platform-014.S3 迁移失败时服务不更新
@@ -218,11 +218,11 @@ sf-core-svc、sf-connect-svc、sf-portal-web 与 sf migrate 所用的命令行�
 - WHEN 执行升级
 - THEN 升级失败，各服务仍运行原版本
 
-### Requirement: R-platform-015 sf 命令行骨架
-SF-DEV-CLI 必须基于 oclif 提供 `sf` 命令行，至少包含 `spec validate`、`spec archive`、`migrate`、`seed`、`plugin new` 命令；每个命令有帮助说明，出错时以非零状态退出。
+### Requirement: R-platform-015 fasrun 命令行骨架
+FASRUN-DEV-CLI 必须基于 oclif 提供 `fasrun` 命令行，至少包含 `spec validate`、`spec archive`、`migrate`、`seed`、`plugin new` 命令；每个命令有帮助说明，出错时以非零状态退出。
 #### Scenario: R-platform-015.S1 列出命令
 - GIVEN 已完成构建
-- WHEN 执行 `sf --help`
+- WHEN 执行 `fasrun --help`
 - THEN 输出中包含 spec validate、spec archive、migrate、seed 与 plugin new
 
 ### Requirement: R-platform-016 许可证与贡献签名
