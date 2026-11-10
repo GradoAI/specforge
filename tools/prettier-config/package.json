@@ -1,0 +1,10 @@
+{
+  "name": "@specforge/prettier-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared Prettier config for the SpecForge monorepo",
+  "exports": {
+    ".": "./index.js"
+  }
+}

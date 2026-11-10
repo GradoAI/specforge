@@ -8,7 +8,8 @@ import { join, resolve } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 
 const REPO_ROOT = resolve(import.meta.dirname, '../../..');
-const PNPM_VERSION = JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8')).packageManager as string;
+const PNPM_VERSION = (JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8')) as { packageManager: string })
+  .packageManager;
 const tempDirs: string[] = [];
 // A packed tarball next to the probe project; pnpm identifies it as `<name>@file:<relative path>`.
 const FIXTURE_SPEC = 'file:../sf-postinstall-fixture-1.0.0.tgz';
@@ -43,7 +44,9 @@ afterAll(() => {
 
 describe('monorepo toolchain', () => {
   it('TC-PLATFORM-001 fresh clone installs, builds and type-checks in strict mode', () => {
-    const base = JSON.parse(readFileSync(join(REPO_ROOT, 'tools/tsconfig/tsconfig.base.json'), 'utf8'));
+    const base = JSON.parse(readFileSync(join(REPO_ROOT, 'tools/tsconfig/tsconfig.base.json'), 'utf8')) as {
+      compilerOptions: Record<string, unknown>;
+    };
     expect(base.compilerOptions).toMatchObject({
       strict: true,
       noUncheckedIndexedAccess: true,
@@ -108,7 +111,10 @@ describe('monorepo toolchain', () => {
     it('runs it only when the package is explicitly allowed (control)', () => {
       const repoSettings = repoInstallSettings().replace(/^allowBuilds:.*$/m, '');
       const { project, marker } = setup('');
-      writeFileSync(join(project, 'pnpm-workspace.yaml'), `${repoSettings}\nallowBuilds:\n  "sf-postinstall-fixture@${FIXTURE_SPEC}": true\n`);
+      writeFileSync(
+        join(project, 'pnpm-workspace.yaml'),
+        `${repoSettings}\nallowBuilds:\n  "sf-postinstall-fixture@${FIXTURE_SPEC}": true\n`,
+      );
       const { status, output } = run(project, 'pnpm', ['install']);
       expect(status, output).toBe(0);
       expect(existsSync(marker), 'allowed postinstall runs').toBe(true);

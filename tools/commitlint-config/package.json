@@ -1,0 +1,22 @@
+{
+  "name": "@specforge/commitlint-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared commitlint config (Conventional Commits) for the SpecForge monorepo",
+  "exports": {
+    ".": "./index.js"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@commitlint/config-conventional": "21.2.4"
+  },
+  "devDependencies": {
+    "@commitlint/lint": "21.2.4",
+    "@commitlint/load": "21.2.4",
+    "@types/node": "24.19.2",
+    "vitest": "4.1.12"
+  }
+}
