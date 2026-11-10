@@ -11,22 +11,22 @@ const REPO_ROOT = resolve(import.meta.dirname, '../../..');
 const rules = loadCodeOwners(join(REPO_ROOT, '.github/CODEOWNERS'));
 const REQUIREMENTS_REVIEWER = '@PontusAI';
 // Rules that intentionally give a path to one person (R-platform-003).
-const SINGLE_OWNER_PATTERNS = ['/specforge/specs/', '/specforge/changes/**/requirements.md', '/.github/'];
+const SINGLE_OWNER_PATTERNS = ['/fasrun/specs/', '/fasrun/changes/**/requirements.md', '/.github/'];
 
 /** Tracked files plus paths that later tasks will create, so the check does not depend on today's tree. */
 function samplePaths(): string[] {
   const tracked = execFileSync('git', ['ls-files'], { cwd: REPO_ROOT, encoding: 'utf8' }).split('\n').filter(Boolean);
   return [
     ...tracked,
-    'apps/sf-core-svc/src/index.ts',
+    'apps/fasrun-core-svc/src/index.ts',
     'packages/backend-plugin-api/src/index.ts',
     'plugins/identity/identity-backend/migrations/0000_init.sql',
-    'deploy/helm/specforge/values.yaml',
+    'deploy/helm/fasrun/values.yaml',
     'docs/README.md',
-    'specforge/changes/SF-1-engineering-skeleton/design.md',
-    'specforge/changes/SF-1-engineering-skeleton/specs/platform/spec.md',
-    'specforge/changes/archive/2026-11-30-SF-1-engineering-skeleton/requirements.md',
-    'specforge/specs/platform/spec.md',
+    'fasrun/changes/SF-1-engineering-skeleton/design.md',
+    'fasrun/changes/SF-1-engineering-skeleton/specs/platform/spec.md',
+    'fasrun/changes/archive/2026-11-30-SF-1-engineering-skeleton/requirements.md',
+    'fasrun/specs/platform/spec.md',
     '.github/workflows/ci.yml',
   ];
 }
@@ -47,8 +47,8 @@ describe('CODEOWNERS pattern semantics (GitHub documentation examples)', () => {
     expect(matches('docs/*', 'docs/getting-started.md')).toBe(true);
     expect(matches('docs/*', 'docs/build-app/troubleshooting.md')).toBe(false);
     expect(matches('**/logs', 'build/logs/x.log')).toBe(true);
-    expect(matches('/specforge/changes/**/requirements.md', 'specforge/changes/SF-1-x/requirements.md')).toBe(true);
-    expect(matches('/specforge/changes/**/requirements.md', 'specforge/changes/SF-1-x/design.md')).toBe(false);
+    expect(matches('/fasrun/changes/**/requirements.md', 'fasrun/changes/SF-1-x/requirements.md')).toBe(true);
+    expect(matches('/fasrun/changes/**/requirements.md', 'fasrun/changes/SF-1-x/design.md')).toBe(false);
   });
 
   it('uses the last matching rule and lets a rule without owners remove ownership', () => {
@@ -76,10 +76,7 @@ describe('repository CODEOWNERS', () => {
   });
 
   it('TC-PLATFORM-008 current specs and requirements layers belong to the requirements reviewer', () => {
-    for (const path of [
-      'specforge/specs/platform/spec.md',
-      'specforge/changes/SF-1-engineering-skeleton/requirements.md',
-    ]) {
+    for (const path of ['fasrun/specs/platform/spec.md', 'fasrun/changes/SF-1-engineering-skeleton/requirements.md']) {
       expect(ownersOf(rules, path).owners, path).toEqual([REQUIREMENTS_REVIEWER]);
     }
   });

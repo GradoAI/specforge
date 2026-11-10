@@ -1,7 +1,7 @@
-# Maintained by SpecForge (during bootstrap phase A: by hand).
+# Maintained by Fasrun (during bootstrap phase A: by hand).
 work: SF-1
 title: M0 工程骨架
-issue: https://github.com/GradoAI/specforge/issues/1
+issue: https://github.com/fasrun/fasrun/issues/1
 size: large
 template_version: 1
 layers:
