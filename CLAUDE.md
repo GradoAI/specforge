@@ -20,7 +20,7 @@
 
 ## 评审、批准与合并
 
-- 需求层规格 PR 与修改 `.github/` 的 PR 由 PontusAI 批准；设计层、任务层规格 PR 与代码 PR 由 zjh1978 批准。
+- 需求层规格 PR、修改 `.github/` 的 PR 与修改 `specforge/specs/` 的 PR 由 PontusAI 批准；设计层、任务层规格 PR 与代码 PR 由 zjh1978 批准。
 - 批准人负责合并。agent（GitHub App）不批准、不合并，也不推送到受保护的分支。
 - 触发人不能单独批准自己的 PR；每个 PR 至少一位作者之外的评审人（见 `.github/CODEOWNERS`）。
 - 自举阶段以上分工靠约定执行；平台就绪后由授权记录与权限规则强制。
