@@ -1,6 +1,8 @@
-// "Spec before code" check (SF-1 T004, D-16).
+// "Spec before code" check (SF-1 T004, D-16; changed by SF-4).
 // TC-PLATFORM-037 — R-platform-012.S1: a code PR that does not reference an existing task is stopped.
 // TC-PLATFORM-038 — R-platform-012.S2: a PR that only changes specs is not restricted.
+// TC-PLATFORM-057 — R-platform-012.S5: a code PR naming a small change (no tasks.md) passes.
+// TC-PLATFORM-058 — R-platform-012.S6: a change number for a larger change, or without a directory, is stopped.
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -13,15 +15,17 @@ const TASKS = new Map([
     'fasrun/changes/SF-1-engineering-skeleton/tasks.md',
     '# 任务\n\n- [x] T003 CLAUDE.md 与 CODEOWNERS — 对应 R-platform-003\n- [ ] T004 CI 基线 — 对应 R-platform-012\n',
   ],
-  ['fasrun/changes/archive/2026-11-11-SF-2-rename-fasrun/tasks.md', '- [x] T001 改名\n'],
 ]);
+// SF-2 is archived and therefore not a change directory on main; SF-9 is a small change without tasks.md.
+const DIRS = ['fasrun/changes/SF-1-engineering-skeleton', 'fasrun/changes/SF-9-example'];
+const base = { changeDirs: DIRS, tasksFiles: TASKS };
 
 describe('spec-first check (R-platform-012)', () => {
   it('TC-PLATFORM-037 a code PR whose task is missing from main is stopped and the missing task is named', () => {
     const result = checkSpecFirst({
       title: 'SF-1 T999 示例',
       changedFiles: ['packages/contracts-core/src/index.ts'],
-      tasksFiles: TASKS,
+      ...base,
     });
     expect(result.ok).toBe(false);
     expect(result.message).toContain('T999');
@@ -32,7 +36,7 @@ describe('spec-first check (R-platform-012)', () => {
     const result = checkSpecFirst({
       title: 'docs(spec): SF-3 需求层规格',
       changedFiles: ['fasrun/changes/SF-3-example/requirements.md', 'fasrun/changes/SF-3-example/meta.yaml'],
-      tasksFiles: TASKS,
+      ...base,
     });
     expect(result.ok).toBe(true);
   });
@@ -41,25 +45,52 @@ describe('spec-first check (R-platform-012)', () => {
     const result = checkSpecFirst({
       title: 'SF-1 T004 CI 基线与「先规格后代码」检查',
       changedFiles: ['tools/scripts/src/spec-first.ts', '.github/workflows/ci.yml'],
-      tasksFiles: TASKS,
+      ...base,
     });
     expect(result.ok).toBe(true);
     expect(result.message).toContain('SF-1 T004');
   });
 
   it('asks for a task reference when the title has none', () => {
-    const result = checkSpecFirst({ title: 'build: bump turbo', changedFiles: ['package.json'], tasksFiles: TASKS });
+    const result = checkSpecFirst({ title: 'build: bump turbo', changedFiles: ['package.json'], ...base });
     expect(result.ok).toBe(false);
     expect(result.message).toContain('SF-<work> T<task>');
     expect(result.message).toContain('package.json');
   });
 
   it('stops a PR whose work has no change directory on main; archived directories do not count', () => {
-    const missing = checkSpecFirst({ title: 'SF-9 T001 x', changedFiles: ['apps/x/src/a.ts'], tasksFiles: TASKS });
+    const missing = checkSpecFirst({ title: 'SF-8 T001 x', changedFiles: ['apps/x/src/a.ts'], ...base });
     expect(missing.ok).toBe(false);
-    expect(missing.message).toContain('fasrun/changes/SF-9-*/');
-    const archived = checkSpecFirst({ title: 'SF-2 T001 x', changedFiles: ['apps/x/src/a.ts'], tasksFiles: TASKS });
+    expect(missing.message).toContain('fasrun/changes/SF-8-*/');
+    const archived = checkSpecFirst({ title: 'SF-2 T001 x', changedFiles: ['apps/x/src/a.ts'], ...base });
     expect(archived.ok).toBe(false);
+  });
+
+  it('TC-PLATFORM-057 a code PR that names a small change on main passes without a task number', () => {
+    const result = checkSpecFirst({
+      title: 'SF-9 示例修复',
+      changedFiles: ['packages/contracts-core/src/a.ts'],
+      ...base,
+    });
+    expect(result.ok).toBe(true);
+    expect(result.message).toContain('fasrun/changes/SF-9-example/');
+  });
+
+  it('TC-PLATFORM-058 a change number for a change with tasks.md, or without a directory on main, is stopped', () => {
+    const larger = checkSpecFirst({ title: 'SF-1 示例', changedFiles: ['packages/a/src/a.ts'], ...base });
+    expect(larger.ok).toBe(false);
+    expect(larger.message).toContain('SF-1 T<task>');
+    const missing = checkSpecFirst({ title: 'SF-99 示例', changedFiles: ['packages/a/src/a.ts'], ...base });
+    expect(missing.ok).toBe(false);
+    expect(missing.message).toContain('fasrun/changes/SF-99-*/');
+  });
+
+  it('stops a task number for a small change and titles where the work number runs into other text', () => {
+    const task = checkSpecFirst({ title: 'SF-9 T001 x', changedFiles: ['packages/a/src/a.ts'], ...base });
+    expect(task.ok).toBe(false);
+    expect(task.message).toContain('without a task number');
+    expect(checkSpecFirst({ title: 'SF-9-fix x', changedFiles: ['packages/a/src/a.ts'], ...base }).ok).toBe(false);
+    expect(checkSpecFirst({ title: 'SF-1 T0041 x', changedFiles: ['packages/a/src/a.ts'], ...base }).ok).toBe(false);
   });
 
   it('exempts specs, docs, Markdown and CI configuration only', () => {
@@ -84,7 +115,7 @@ describe('collectFromGit', () => {
     if (dir) rmSync(dir, { recursive: true, force: true });
   });
 
-  it('reports both sides of a rename and reads tasks.md from the base branch only', () => {
+  it('reports both sides of a rename and reads change directories and tasks.md from the base branch only', () => {
     dir = mkdtempSync(join(tmpdir(), 'spec-first-'));
     const git = (...args: string[]) => execFileSync('git', args, { cwd: dir, encoding: 'utf8' });
     const write = (path: string, text: string) => {
@@ -95,6 +126,8 @@ describe('collectFromGit', () => {
     git('config', 'user.email', 'test@example.com');
     git('config', 'user.name', 'test');
     write('fasrun/changes/SF-1-x/tasks.md', '- [ ] T004 CI\n');
+    write('fasrun/changes/SF-3-small/requirements.md', '# SF-3\n');
+    write('fasrun/changes/archive/2026-11-11-SF-2-old/tasks.md', '- [x] T001 old\n');
     write('packages/a/src/index.ts', 'export const a = 1;\n');
     git('add', '.');
     git('commit', '-qm', 'base');
@@ -104,7 +137,8 @@ describe('collectFromGit', () => {
     git('add', '.');
     git('commit', '-qm', 'move');
 
-    const { changedFiles, tasksFiles } = collectFromGit('main', dir);
+    const { changedFiles, changeDirs, tasksFiles } = collectFromGit('main', dir);
+    expect(changeDirs).toEqual(['fasrun/changes/SF-1-x', 'fasrun/changes/SF-3-small']);
     expect([...changedFiles].sort()).toEqual([
       'fasrun/a.ts',
       'fasrun/changes/SF-5-y/tasks.md',
