@@ -7,6 +7,8 @@ import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest }
 import { pino, type Logger } from 'pino';
 import { registerHostRoutes } from './http.js';
 
+/** Loopback by default; container images and the Helm chart set 0.0.0.0 (SF-1 T018, T019). */
+export const DEFAULT_HOST = '127.0.0.1';
 export const DEFAULT_PORT = 7013;
 
 const CONTENT_TYPES: Record<string, string> = {
@@ -32,6 +34,8 @@ export interface PortalHost {
   readonly server: FastifyInstance;
   readonly logger: Logger;
   readonly port: number;
+  /** Listen address from FASRUN_PORTAL_HOST. */
+  readonly hostname: string;
   stop(): Promise<void>;
 }
 
@@ -69,6 +73,7 @@ export function createPortalHost(options: PortalHostOptions = {}): PortalHost {
     server,
     logger,
     port: Number(env.FASRUN_PORTAL_PORT ?? DEFAULT_PORT),
+    hostname: env.FASRUN_PORTAL_HOST ?? DEFAULT_HOST,
     stop: () => server.close(),
   };
 }

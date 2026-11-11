@@ -30,6 +30,13 @@ describe('fasrun-node-svc (R-platform-004)', () => {
     }
   });
 
+  it('listens on 127.0.0.1 unless FASRUN_NODE_HOST is set', async () => {
+    const local = createNodeHost({ env: {}, logger: pino({ level: 'silent' }) });
+    const open = createNodeHost({ env: { ...{}, FASRUN_NODE_HOST: '0.0.0.0' }, logger: pino({ level: 'silent' }) });
+    expect([local.hostname, open.hostname]).toEqual(['127.0.0.1', '0.0.0.0']);
+    await Promise.all([local.stop(), open.stop()]);
+  });
+
   it('is not ready before initialisation finishes', async () => {
     const host = createNodeHost({ env: {}, logger: pino({ level: 'silent' }) });
     // Fastify serves injected requests after ready(); readiness itself is still false.

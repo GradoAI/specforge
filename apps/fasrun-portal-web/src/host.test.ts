@@ -33,6 +33,13 @@ describe('fasrun-portal-web', () => {
     await host.stop();
   });
 
+  it('listens on 127.0.0.1 unless FASRUN_PORTAL_HOST is set', async () => {
+    const local = createPortalHost({ env: {}, webRoot: webRoot(true), logger: silent });
+    const open = createPortalHost({ env: { FASRUN_PORTAL_HOST: '0.0.0.0' }, webRoot: webRoot(true), logger: silent });
+    expect([local.hostname, open.hostname]).toEqual(['127.0.0.1', '0.0.0.0']);
+    await Promise.all([local.stop(), open.stop()]);
+  });
+
   it('is not ready without a page and never serves files outside its directory', async () => {
     const host = createPortalHost({ webRoot: webRoot(false), logger: silent });
     expect((await host.server.inject({ method: 'GET', url: '/readyz' })).statusCode).toBe(503);
