@@ -59,9 +59,14 @@
 推送前至少运行：
 
 ```sh
+set -euo pipefail
 pnpm install --frozen-lockfile
 pnpm typecheck
 pnpm lint
-pnpm test
+pnpm format
+pnpm test --force --continue
 gitleaks git --redact .
 ```
+
+- 测试以 `--force` 绕过 Turborepo 缓存运行，至少覆盖受影响的包。根目录的配置文件（如 `pnpm-workspace.yaml`）不在各包的缓存输入中，缓存的结果可能掩盖失败。
+- 检查与推送用的脚本以 `set -euo pipefail` 开头；任何一步验证失败即停止，不继续提交或推送。
