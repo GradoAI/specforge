@@ -1,9 +1,9 @@
 {
-  "name": "@specforge/eslint-plugin",
+  "name": "@fasrun/eslint-plugin",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "ESLint rules for the SpecForge monorepo: package roles and dependency direction",
+  "description": "ESLint rules for the Fasrun monorepo: package roles and dependency direction",
   "exports": {
     ".": "./src/index.js"
   },

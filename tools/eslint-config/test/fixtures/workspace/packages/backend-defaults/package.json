@@ -1,1 +1,8 @@
-{ "name": "@specforge/backend-defaults", "private": true, "type": "module", "exports": { ".": "./src/index.ts" } }
+{
+  "name": "@fasrun/backend-defaults",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

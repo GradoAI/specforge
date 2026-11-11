@@ -1,9 +1,9 @@
 {
-  "name": "@specforge/tsconfig",
+  "name": "@fasrun/tsconfig",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Shared TypeScript configuration for the SpecForge monorepo",
+  "description": "Shared TypeScript configuration for the Fasrun monorepo",
   "exports": {
     "./base.json": "./tsconfig.base.json"
   },

@@ -1,9 +1,9 @@
 {
-  "name": "@specforge/prettier-config",
+  "name": "@fasrun/prettier-config",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Shared Prettier config for the SpecForge monorepo",
+  "description": "Shared Prettier config for the Fasrun monorepo",
   "exports": {
     ".": "./index.js"
   }

@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * specforge/dependency-direction — package roles and dependency direction (tech plan 2.1 "依赖规则", design D-2).
+ * fasrun/dependency-direction — package roles and dependency direction (tech plan 2.1 "依赖规则", design D-2).
  *
  * | importer                     | may import                                                               |
  * | ---------------------------- | ------------------------------------------------------------------------ |
@@ -107,7 +107,7 @@ function isExported(/** @type {Record<string, any>} */ manifest, /** @type {stri
 export const dependencyDirection = {
   meta: {
     type: 'problem',
-    docs: { description: 'Enforce SpecForge package roles and dependency direction' },
+    docs: { description: 'Enforce Fasrun package roles and dependency direction' },
     schema: [],
     messages: {
       direction: '"{{from}}" must not import "{{to}}": {{reason}}.',
@@ -141,7 +141,7 @@ export const dependencyDirection = {
         }
         return;
       }
-      if (!source.startsWith('@specforge/')) return;
+      if (!source.startsWith('@fasrun/')) return;
 
       const [scope, name, ...rest] = source.split('/');
       const toName = `${scope}/${name}`;

@@ -1,11 +1,11 @@
-// The role table of specforge/dependency-direction (design D-2), as a pure function.
+// The role table of fasrun/dependency-direction (design D-2), as a pure function.
 import { describe, expect, it } from 'vitest';
 import { violation } from '../src/rules/dependency-direction.js';
 import { classify } from '../src/workspace.js';
 
-const plugin = (name: string) => classify(`@specforge/plugin-${name}`, 'plugins');
-const base = (name: string) => classify(`@specforge/${name}`, 'packages');
-const host = classify('@specforge/sf-core-svc', 'apps');
+const plugin = (name: string) => classify(`@fasrun/plugin-${name}`, 'plugins');
+const base = (name: string) => classify(`@fasrun/${name}`, 'packages');
+const host = classify('@fasrun/fasrun-core-svc', 'apps');
 const allowed = (from: ReturnType<typeof classify>, to: ReturnType<typeof classify>, test = false) =>
   violation(from, to, test) === null;
 

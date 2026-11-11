@@ -5,7 +5,7 @@
       "path": "tools/tsconfig"
     },
     {
-      "path": "tools/eslint-plugin-specforge"
+      "path": "tools/eslint-plugin-fasrun"
     },
     {
       "path": "tools/eslint-config"

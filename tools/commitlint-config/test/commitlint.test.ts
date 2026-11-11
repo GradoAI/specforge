@@ -16,7 +16,7 @@ describe('commitlint config', () => {
   });
 
   it('accepts a conventional message and rejects unknown types', async () => {
-    expect((await check('feat(spec): add sf spec validate')).valid).toBe(true);
+    expect((await check('feat(spec): add fasrun spec validate')).valid).toBe(true);
     expect((await check('feature: add something')).valid).toBe(false);
   });
 });

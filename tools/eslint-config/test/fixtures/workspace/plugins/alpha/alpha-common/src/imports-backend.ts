@@ -1,3 +1,3 @@
-import { marker } from '@specforge/plugin-alpha-backend';
+import { marker } from '@fasrun/plugin-alpha-backend';
 
 export const value = marker;

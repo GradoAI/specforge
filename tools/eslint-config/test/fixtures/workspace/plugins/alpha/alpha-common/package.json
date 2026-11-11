@@ -1,1 +1,8 @@
-{ "name": "@specforge/plugin-alpha-common", "private": true, "type": "module", "exports": { ".": "./src/index.ts" } }
+{
+  "name": "@fasrun/plugin-alpha-common",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

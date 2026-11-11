@@ -1,3 +1,3 @@
-import { createConfig } from '@specforge/eslint-config';
+import { createConfig } from '@fasrun/eslint-config';
 
 export default createConfig({ tsconfigRootDir: import.meta.dirname });
