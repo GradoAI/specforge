@@ -138,6 +138,31 @@
   | `plugin new` | `cli-templates` |
 
 - 命令行只负责读写文件、连接数据库与输出；出错时以非零状态退出，`--json` 输出机器可读的结果。
+- 包的 `bin` 同时提供 `fasrun` 与别名 `fas`，指向同一入口。T008 交付命令框架、`--version`、`init` 与 `login`；`spec validate`、`spec archive`（T014、T015）、`migrate`（T012）、`seed`（T017）、`plugin new`（T010）、`check`（T014）在 T008 中先声明参数与帮助，执行时以退出码 5 说明「由 T0xx 实现」。
+- 输出与退出码（技术方案 2.7 的 agent 接口约定）：
+  - 每个命令继承同一个基类，基类提供 `--json`。加 `--json` 时标准输出只写一个 JSON 对象：成功为 `{ "ok": true, "command": "<命令>", "result": … }`，失败为 `{ "ok": false, "command": "<命令>", "error": { "code": "FASRUN_…", "message": "…" } }`；进度与提示写到标准错误。
+  - 退出码固定，写入命令行帮助与开发者文档：
+
+    | 退出码 | 含义 | 错误码示例 |
+    | --- | --- | --- |
+    | 0 | 成功 | — |
+    | 1 | 检查未通过 | `FASRUN_CHECK_FAILED` |
+    | 2 | 用法错误：参数或选项无效、缺少必需输入 | `FASRUN_USAGE` |
+    | 3 | 配置或认证错误：缺少配置、未登录、授权被拒绝或过期 | `FASRUN_CONFIG_INVALID`、`FASRUN_AUTH_DENIED`、`FASRUN_AUTH_EXPIRED` |
+    | 4 | 无法连接服务 | `FASRUN_UNREACHABLE` |
+    | 5 | 其他错误（含尚未实现的命令） | `FASRUN_INTERNAL`、`FASRUN_NOT_IMPLEMENTED` |
+
+  - 基类把 oclif 的参数错误映射为 2，把 `FasrunError` 按错误码映射为上表，其余异常为 5。
+- 非交互运行：命令不使用交互式提示；必需的输入只来自参数与环境变量，缺少时以退出码 2（或配置类的 3）退出并说明缺什么。`login` 不尝试打开浏览器，只输出验证地址与用户码。
+- `fasrun init [目录]`：
+  - 生成 `fasrun.yaml`、Fasfile 模板与 `fasrun/specs/`、`fasrun/changes/`，已存在的文件不覆盖（R-platform-015.S2）；
+  - 仓库没有 `AGENTS.md` 时生成一份执行器说明模板（技术方案 2.11「执行器说明文件」）；
+  - `CLAUDE.md` 不存在时创建，内容为 `@AGENTS.md`；存在但没有单独一行 `@AGENTS.md` 时在末尾追加该行；已有内容不改写，重复执行不重复追加；
+  - `--json` 的结果列出新建、追加与跳过的文件。
+- `fasrun login`（技术方案 2.6）：
+  - 读取 `<FASRUN_ENDPOINT>/.well-known/oauth-authorization-server`（RFC 8414），按其中的 `device_authorization_endpoint` 与 `token_endpoint` 走 OAuth 2.0 设备授权（RFC 8628），客户端为在 Keycloak 中预先登记的公开客户端 `fasrun-cli`。该元数据由 fasrun-core-svc 在接入 Keycloak 后提供（M1）；M0 的用例使用模拟的授权服务；
+  - 标准错误输出验证地址（`verification_uri_complete` 优先）与用户码，按返回的 `interval` 轮询；收到 `slow_down` 时把间隔加 5 秒；`access_denied` 与 `expired_token` 分别报 `FASRUN_AUTH_DENIED`、`FASRUN_AUTH_EXPIRED`（退出码 3）；
+  - 令牌写入 `$FASRUN_CONFIG/credentials.json`（`FASRUN_CONFIG` 默认 `~/.config/fasrun`），先写同目录的临时文件并设权限 0600 再改名；目录权限 0700。令牌不进入标准输出、日志与 `--json` 的结果，结果只含过期时间与账号。
 
 ### D-11 规格自检
 对应需求：R-spec-001、R-spec-002
