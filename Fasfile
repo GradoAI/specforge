@@ -18,21 +18,23 @@ stack:
 
 # Test plan 3.1: the merge gate of tech plan 2.3 plus the control-flow quick set and the 3.4 security cases.
 quality_gates:
+  # The job names of .github/workflows/ci.yml, which are the check names required on main (SF-1 D-16).
+  # In CI since T004: typecheck to gitleaks. Added by later tasks: license-check and dco (T005),
+  # migration-check (T013), spec-validate (T014), trivy (T018).
   required_checks:
     - typecheck
     - lint # ESLint including fasrun/dependency-direction
     - format
     - commitlint
-    - unit-tests
-    - integration-tests
-    - e2e-affected
-    - migration-check
-    - control-flow-quick
-    - security-cases
-    - fasrun spec validate
-    - changesets # PRs that change a package carry a changeset
-    - spec-before-code
+    - test # unit and integration tests, including the control-flow quick set and the 3.4 security cases
+    - changesets # PRs that change a non-private package carry a changeset
+    - spec-first
     - gitleaks
+    - license-check
+    - dco
+    - migration-check
+    - spec-validate # fasrun spec validate fasrun/
+    - trivy
   coverage:
     application_lines: 80 # minimum line coverage of application layers
     security_branches: 90 # validators, condition expressions, permission rules, trust propagation
