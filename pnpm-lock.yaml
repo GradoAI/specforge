@@ -438,10 +438,35 @@ importers:
         version: 4.1.12(@types/node@24.19.2)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1))
 
   packages/test-utils:
+    dependencies:
+      '@fasrun/backend-plugin-api':
+        specifier: workspace:*
+        version: link:../backend-plugin-api
+      '@fasrun/contracts-core':
+        specifier: workspace:*
+        version: link:../contracts-core
+      '@testcontainers/postgresql':
+        specifier: 12.2.1
+        version: 12.2.1
+      awilix:
+        specifier: 13.0.5
+        version: 13.0.5
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)
+      fastify:
+        specifier: 5.12.8
+        version: 5.12.8
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
     devDependencies:
       '@types/node':
         specifier: 24.19.2
         version: 24.19.2
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
       tsdown:
         specifier: 0.23.5
         version: 0.23.5(typescript@6.0.3)
