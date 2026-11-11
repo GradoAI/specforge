@@ -82,6 +82,19 @@ describe('fasrun-core-svc without a database (R-platform-004)', () => {
     expect(generated.headers['x-request-id']).toMatch(/^[0-9A-HJKMNP-TV-Z]{26}$/);
   });
 
+  it('listens on 127.0.0.1 unless FASRUN_CORE_HOST is set', async () => {
+    const local = createCoreHost({
+      env: { FASRUN_CORE_DATABASE_URL: 'postgres://fasrun@127.0.0.1:1/fasrun' },
+      logger: captureLogger().logger,
+    });
+    const open = createCoreHost({
+      env: { ...{ FASRUN_CORE_DATABASE_URL: 'postgres://fasrun@127.0.0.1:1/fasrun' }, FASRUN_CORE_HOST: '0.0.0.0' },
+      logger: captureLogger().logger,
+    });
+    expect([local.hostname, open.hostname]).toEqual(['127.0.0.1', '0.0.0.0']);
+    await Promise.all([local.stop(), open.stop()]);
+  });
+
   it('requires FASRUN_CORE_DATABASE_URL', () => {
     expect(() => createCoreHost({ env: {}, logger: captureLogger().logger })).toThrow(/FASRUN_CORE_DATABASE_URL/);
   });

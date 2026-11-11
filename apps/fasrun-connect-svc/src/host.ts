@@ -6,6 +6,8 @@ import { registerHostRoutes } from './http.js';
 import { plugins as defaultPlugins } from './plugins.js';
 
 export const COMPONENT = 'connect';
+/** Loopback by default; container images and the Helm chart set 0.0.0.0 (SF-1 T018, T019). */
+export const DEFAULT_HOST = '127.0.0.1';
 export const DEFAULT_PORT = 7011;
 
 export interface ConnectHostOptions {
@@ -18,6 +20,8 @@ export interface ConnectHost {
   readonly backend: Backend;
   readonly logger: Logger;
   readonly port: number;
+  /** Listen address from FASRUN_CONNECT_HOST. */
+  readonly hostname: string;
   stop(): Promise<void>;
 }
 
@@ -38,6 +42,7 @@ export function createConnectHost(options: ConnectHostOptions = {}): ConnectHost
     backend,
     logger,
     port: Number(config.get('PORT') ?? DEFAULT_PORT),
+    hostname: config.get('HOST') ?? DEFAULT_HOST,
     stop: () => backend.stop(),
   };
 }

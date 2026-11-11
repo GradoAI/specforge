@@ -34,6 +34,16 @@ describe('fasrun-connect-svc (R-platform-004)', () => {
     expect((await server.inject({ method: 'GET', url: '/healthz' })).statusCode).toBe(200);
   });
 
+  it('listens on 127.0.0.1 unless FASRUN_CONNECT_HOST is set', async () => {
+    const local = createConnectHost({ env: { FASRUN_CONNECT_CORE_URL: 'http://127.0.0.1:1' }, logger: silent });
+    const open = createConnectHost({
+      env: { ...{ FASRUN_CONNECT_CORE_URL: 'http://127.0.0.1:1' }, FASRUN_CONNECT_HOST: '0.0.0.0' },
+      logger: silent,
+    });
+    expect([local.hostname, open.hostname]).toEqual(['127.0.0.1', '0.0.0.0']);
+    await Promise.all([local.stop(), open.stop()]);
+  });
+
   it('requires FASRUN_CONNECT_CORE_URL', () => {
     expect(() => createConnectHost({ env: {}, logger: silent })).toThrow(/FASRUN_CONNECT_CORE_URL/);
   });
