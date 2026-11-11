@@ -1,0 +1,8 @@
+/** Plugin identifier of {{plugin}}; also its database schema and route prefix (tech plan 2.1). */
+export const {{PLUGIN}}_PLUGIN_ID = '{{plugin}}';
+
+/** Status reported by the {{plugin}} plugin at /api/{{plugin}}/v1/status. */
+export interface {{Plugin}}Status {
+  plugin: typeof {{PLUGIN}}_PLUGIN_ID;
+  status: 'ok';
+}

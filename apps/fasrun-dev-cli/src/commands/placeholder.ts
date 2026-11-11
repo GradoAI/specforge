@@ -43,15 +43,6 @@ export class Seed extends BaseCommand {
   }
 }
 
-export class PluginNew extends BaseCommand {
-  static override summary = 'Create a plugin from the templates';
-  static override args = { name: Args.string({ description: 'Plugin name, e.g. work', required: true }) };
-  async run(): Promise<never> {
-    await this.parse(PluginNew);
-    return notImplemented('plugin new', 'T010');
-  }
-}
-
 export class Check extends BaseCommand {
   static override summary = 'Run spec validation and the fasrun.yaml and Fasfile schema checks';
   async run(): Promise<never> {

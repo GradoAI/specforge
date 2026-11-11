@@ -54,6 +54,60 @@
     },
     {
       "path": "apps/fasrun-dev-cli"
+    },
+    {
+      "path": "plugins/entry/entry-common"
+    },
+    {
+      "path": "plugins/entry/entry-backend"
+    },
+    {
+      "path": "plugins/identity/identity-common"
+    },
+    {
+      "path": "plugins/identity/identity-backend"
+    },
+    {
+      "path": "plugins/spec/spec-common"
+    },
+    {
+      "path": "plugins/spec/spec-backend"
+    },
+    {
+      "path": "plugins/knowledge/knowledge-common"
+    },
+    {
+      "path": "plugins/knowledge/knowledge-backend"
+    },
+    {
+      "path": "plugins/orchestration/orchestration-common"
+    },
+    {
+      "path": "plugins/orchestration/orchestration-backend"
+    },
+    {
+      "path": "plugins/environment/environment-common"
+    },
+    {
+      "path": "plugins/environment/environment-backend"
+    },
+    {
+      "path": "plugins/governance/governance-common"
+    },
+    {
+      "path": "plugins/governance/governance-backend"
+    },
+    {
+      "path": "plugins/insight/insight-common"
+    },
+    {
+      "path": "plugins/insight/insight-backend"
+    },
+    {
+      "path": "plugins/connect/connect-common"
+    },
+    {
+      "path": "plugins/connect/connect-backend"
     }
   ]
 }

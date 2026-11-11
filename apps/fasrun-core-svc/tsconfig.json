@@ -17,6 +17,30 @@
     },
     {
       "path": "../../packages/contracts-core"
+    },
+    {
+      "path": "../../plugins/entry/entry-backend"
+    },
+    {
+      "path": "../../plugins/identity/identity-backend"
+    },
+    {
+      "path": "../../plugins/spec/spec-backend"
+    },
+    {
+      "path": "../../plugins/knowledge/knowledge-backend"
+    },
+    {
+      "path": "../../plugins/orchestration/orchestration-backend"
+    },
+    {
+      "path": "../../plugins/environment/environment-backend"
+    },
+    {
+      "path": "../../plugins/governance/governance-backend"
+    },
+    {
+      "path": "../../plugins/insight/insight-backend"
     }
   ]
 }
