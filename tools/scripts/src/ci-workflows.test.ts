@@ -1,6 +1,7 @@
 // CI workflows (SF-1 T004, D-16).
 // TC-PLATFORM-039 — R-platform-012.S3: a PR that changes a package without a changeset is stopped.
 // TC-PLATFORM-040 — R-platform-012.S4: workflow tokens are read-only by default.
+// TC-PLATFORM-059 — R-platform-012.S7: CI runs on pull requests, in the merge queue and on pushes to main.
 import { execFileSync, spawnSync } from 'node:child_process';
 import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -36,6 +37,13 @@ describe('workflow permissions (R-platform-012.S4)', () => {
       expect(isReadOnly(doc.permissions), `${name}: top-level permissions`).toBe(true);
       expect(JSON.stringify(doc.on ?? {}), `${name}: trigger`).not.toContain('pull_request_target');
     }
+  });
+
+  it('TC-PLATFORM-059 ci.yml runs on pull requests, in the merge queue and on pushes to main', () => {
+    const ci = workflows().find((w) => w.name === 'ci.yml');
+    const on = ci?.doc.on as Record<string, { branches?: string[] } | null> | undefined;
+    expect(Object.keys(on ?? {}).sort()).toEqual(['merge_group', 'pull_request', 'push']);
+    expect(on?.push?.branches).toEqual(['main']);
   });
 
   it('pins every third-party action to a commit SHA', () => {

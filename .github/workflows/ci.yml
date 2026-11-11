@@ -4,6 +4,8 @@ name: CI
 
 on:
   pull_request:
+  # The merge queue runs the same jobs on the queued commit; PR-only jobs (if: pull_request) show as skipped.
+  merge_group:
   push:
     branches: [main]
 
