@@ -7,3 +7,6 @@ coverage/
 .env
 .env.*
 !.env.example
+
+# Local Fasrun CLI overrides (tech plan 2.11); never committed.
+fasrun.local.yaml
