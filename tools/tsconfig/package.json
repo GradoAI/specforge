@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "description": "Shared TypeScript configuration for the Fasrun monorepo",
+  "license": "AGPL-3.0-only",
   "exports": {
     "./base.json": "./tsconfig.base.json"
   },

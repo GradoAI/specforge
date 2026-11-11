@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "description": "ESLint rules for the Fasrun monorepo: package roles and dependency direction",
+  "license": "AGPL-3.0-only",
   "exports": {
     ".": "./src/index.js"
   },
