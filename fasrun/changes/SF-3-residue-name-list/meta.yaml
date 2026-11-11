@@ -1,0 +1,11 @@
+# Maintained by Fasrun (during bootstrap phase A: by hand).
+work: SF-3
+title: R-platform-018 旧名清单移入残留检查配置
+issue: https://github.com/fasrun/fasrun/issues/19
+size: small
+template_version: 1
+layers:
+  requirements:
+    status: in_review
+  tasks:
+    status: in_review
