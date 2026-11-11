@@ -4,7 +4,8 @@ import { readFileSync } from 'node:fs';
 import { flush, run } from '@oclif/core';
 import Init from './commands/init.js';
 import Login from './commands/login.js';
-import { Check, Migrate, PluginNew, Seed, SpecArchive, SpecValidate } from './commands/placeholder.js';
+import { Check, Migrate, Seed, SpecArchive, SpecValidate } from './commands/placeholder.js';
+import PluginNew from './commands/plugin-new.js';
 import { describeFailure, ExitCode, failureEnvelope } from './errors.js';
 
 export const COMMANDS = {

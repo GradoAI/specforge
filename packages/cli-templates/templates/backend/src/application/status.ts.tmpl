@@ -1,0 +1,6 @@
+import type { {{Plugin}}StatusDto } from '../common/index.js';
+
+/** Health of the {{plugin}} plugin, returned by GET /api/{{plugin}}/v1/status. */
+export function getStatus(): {{Plugin}}StatusDto {
+  return { plugin: '{{plugin}}', status: 'ok' };
+}

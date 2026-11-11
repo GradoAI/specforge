@@ -1,0 +1,15 @@
+import { startTestBackend } from '@fasrun/test-utils';
+import { describe, expect, it } from 'vitest';
+import { {{pluginCamel}}Plugin } from './plugin.js';
+
+describe('{{plugin}} plugin', () => {
+  it('serves its status under /api/{{plugin}}/v1', async () => {
+    const backend = await startTestBackend({ features: [{{pluginCamel}}Plugin] });
+    try {
+      const response = await backend.server.inject({ method: 'GET', url: '/api/{{plugin}}/v1/status' });
+      expect(response.json()).toEqual({ plugin: '{{plugin}}', status: 'ok' });
+    } finally {
+      await backend.stop();
+    }
+  });
+});

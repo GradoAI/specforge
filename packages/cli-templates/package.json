@@ -1,7 +1,7 @@
 {
   "name": "@fasrun/cli-templates",
   "version": "0.0.0",
-  "description": "Templates for fasrun plugin new (placeholder until SF-1 T010)",
+  "description": "Templates and renderer for fasrun plugin new",
   "license": "Apache-2.0",
   "type": "module",
   "exports": {
@@ -12,10 +12,13 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "templates",
+    "LICENSE"
   ],
   "scripts": {
-    "build": "tsdown"
+    "build": "tsdown",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@types/node": "24.19.2",

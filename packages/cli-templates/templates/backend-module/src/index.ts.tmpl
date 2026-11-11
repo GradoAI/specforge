@@ -1,0 +1,15 @@
+import { coreServices, createBackendModule } from '@fasrun/backend-plugin-api';
+
+/** Module {{module}} of the {{plugin}} plugin. */
+export default createBackendModule({
+  pluginId: '{{plugin}}',
+  moduleId: '{{module}}',
+  register(env) {
+    env.registerInit({
+      deps: { logger: coreServices.logger },
+      init({ logger }) {
+        logger.info('{{plugin}} module {{module}} initialised');
+      },
+    });
+  },
+});
