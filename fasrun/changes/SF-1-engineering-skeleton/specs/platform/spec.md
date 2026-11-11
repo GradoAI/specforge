@@ -219,11 +219,19 @@ fasrun-core-svc、fasrun-connect-svc、fasrun-portal-web 与 fasrun migrate 所�
 - THEN 升级失败，各服务仍运行原版本
 
 ### Requirement: R-platform-015 fasrun 命令行骨架
-FASRUN-DEV-CLI 必须基于 oclif 提供 `fasrun` 命令行，至少包含 `spec validate`、`spec archive`、`migrate`、`seed`、`plugin new` 命令；每个命令有帮助说明，出错时以非零状态退出。
+FASRUN-DEV-CLI 必须基于 oclif 提供 `fasrun` 命令行，包的 bin 同时提供 fasrun 与别名 fas，至少包含 `spec validate`、`spec archive`、`migrate`、`seed`、`plugin new`、`init`、`check` 命令；每个命令有帮助说明，出错时以非零状态退出。`fasrun init` 必须在目标目录生成 fasrun.yaml、Fasfile 模板与规格目录（specs/ 与 changes/），已存在的文件不覆盖。`fasrun check` 必须依次运行 `fasrun spec validate` 与 Fasfile、fasrun.yaml 的 schema 校验（R-platform-017），任一失败即以非零状态退出。命令行读取的环境变量为 FASRUN_ENDPOINT、FASRUN_API_KEY、FASRUN_CONFIG、FASRUN_LOG_LEVEL，不带组件段。
 #### Scenario: R-platform-015.S1 列出命令
 - GIVEN 已完成构建
-- WHEN 执行 `fasrun --help`
-- THEN 输出中包含 spec validate、spec archive、migrate、seed 与 plugin new
+- WHEN 执行 `fasrun --help`，再执行 `fas --help`
+- THEN 两次输出相同，都包含 spec validate、spec archive、migrate、seed、plugin new、init 与 check
+#### Scenario: R-platform-015.S2 init 生成仓库配置且不覆盖已有文件
+- GIVEN 一个空目录，以及一个已有 Fasfile 的目录
+- WHEN 分别执行 `fasrun init`
+- THEN 空目录中生成 fasrun.yaml、Fasfile 与 fasrun/specs/、fasrun/changes/；已有的 Fasfile 内容不变
+#### Scenario: R-platform-015.S3 check 依次运行规格自检与配置校验
+- GIVEN 单仓根目录
+- WHEN 执行 `fasrun check`
+- THEN 先运行 `fasrun spec validate fasrun/`，再校验 Fasfile 与 fasrun.yaml，全部通过时以 0 退出；把 Fasfile 的 version 改为 2 后再执行，以非零状态退出并指明 Fasfile
 
 ### Requirement: R-platform-016 许可证与贡献签名
 仓库根目录必须放 AGPL-3.0 的 LICENSE。供插件开发使用的包（backend-plugin-api、frontend-plugin-api、contracts-core、ui、test-utils、cli-templates，以及各插件的 -common、-node、-react 包）必须各自放 Apache-2.0 的 LICENSE，并在 package.json 中声明 Apache-2.0；其余包声明 AGPL-3.0-only。声明为 Apache-2.0 的包不能依赖声明为 AGPL-3.0-only 的工作区包。CI 必须检查许可声明的一致性；外部贡献者（不是组织成员或仓库协作者）提交的 PR 中，每个提交都必须带 DCO 签名（Signed-off-by），组织成员与本仓库 GitHub App 的提交不要求。
