@@ -1,0 +1,25 @@
+{
+  "name": "@fasrun/fasrun-connect-svc",
+  "version": "0.0.0",
+  "private": true,
+  "description": "FASRUN-CONNECT-SVC: edge host for webhooks and external connections",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "build": "tsdown src/index.ts --format esm --platform node",
+    "start": "node dist/index.mjs",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fasrun/backend-defaults": "workspace:*",
+    "@fasrun/backend-plugin-api": "workspace:*",
+    "@fasrun/contracts-core": "workspace:*",
+    "fastify": "5.12.8",
+    "pino": "10.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "tsdown": "0.23.5",
+    "vitest": "4.1.12"
+  }
+}

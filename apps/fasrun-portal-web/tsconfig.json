@@ -1,0 +1,12 @@
+{
+  "extends": "../../tools/tsconfig/tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist/tsc",
+    "rootDir": ".",
+    "emitDeclarationOnly": true,
+    "types": ["node"],
+    "lib": ["es2024", "dom", "dom.iterable"],
+    "jsx": "react-jsx"
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "rsbuild.config.ts"]
+}

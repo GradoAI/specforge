@@ -1,0 +1,28 @@
+{
+  "name": "@fasrun/fasrun-core-svc",
+  "version": "0.0.0",
+  "private": true,
+  "description": "FASRUN-CORE-SVC: control plane host (work, specs, orchestration, connectors)",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "build": "tsdown src/index.ts --format esm --platform node",
+    "start": "node dist/index.mjs",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fasrun/backend-defaults": "workspace:*",
+    "@fasrun/backend-plugin-api": "workspace:*",
+    "@fasrun/contracts-core": "workspace:*",
+    "fastify": "5.12.8",
+    "pg": "8.23.1",
+    "pino": "10.4.0"
+  },
+  "devDependencies": {
+    "@testcontainers/postgresql": "12.2.1",
+    "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
+    "tsdown": "0.23.5",
+    "vitest": "4.1.12"
+  }
+}

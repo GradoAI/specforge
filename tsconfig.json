@@ -39,6 +39,18 @@
     },
     {
       "path": "packages/ui"
+    },
+    {
+      "path": "apps/fasrun-core-svc"
+    },
+    {
+      "path": "apps/fasrun-connect-svc"
+    },
+    {
+      "path": "apps/fasrun-node-svc"
+    },
+    {
+      "path": "apps/fasrun-portal-web"
     }
   ]
 }
