@@ -1,6 +1,5 @@
 # Merge gate of the monorepo (SF-1 D-16, R-platform-012). Each job name is a required check on main.
-# Later tasks add their own jobs: license-check and dco (T005), migration-check (T013),
-# spec-validate (T014), trivy (T018).
+# Later tasks add their own jobs: migration-check (T013), spec-validate (T014), trivy (T018).
 name: CI
 
 on:
@@ -137,6 +136,46 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
           BASE_REF: origin/${{ github.base_ref }}
         run: node tools/scripts/dist/src/spec-first-cli.js
+
+  license-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec tsc -b tools/scripts
+      - run: node tools/scripts/dist/src/license-check-cli.js
+
+  dco:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec tsc -b tools/scripts
+      - env:
+          AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          APP_LOGIN: fasrun-dev[bot]
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node tools/scripts/dist/src/dco-cli.js
 
   gitleaks:
     runs-on: ubuntu-24.04

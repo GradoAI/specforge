@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "description": "Shared commitlint config (Conventional Commits) for the Fasrun monorepo",
+  "license": "AGPL-3.0-only",
   "exports": {
     ".": "./index.js"
   },
