@@ -1,0 +1,26 @@
+{
+  "name": "@fasrun/contracts-core",
+  "version": "0.0.0",
+  "description": "Shared contracts: typed errors, prefixed identifiers, paging and audit context",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "@fasrun/source": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "tsdown": "0.23.5",
+    "vitest": "4.1.12"
+  }
+}
