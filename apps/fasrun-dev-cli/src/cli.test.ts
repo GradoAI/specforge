@@ -14,7 +14,10 @@ import { createServer as createNetServer, type AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+// Each test starts several CLI processes; CI runs many suites in parallel, so allow more than the default 5 s.
+vi.setConfig({ testTimeout: 30_000 });
 
 const BIN = fileURLToPath(new URL('../bin/run.js', import.meta.url));
 const PORTAL = fileURLToPath(new URL('../../fasrun-portal-web/dist/server/index.mjs', import.meta.url));
