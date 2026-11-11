@@ -231,7 +231,7 @@ fasrun-core-svc、fasrun-connect-svc、fasrun-portal-web 与 fasrun migrate 所�
 - THEN 升级失败，各服务仍运行原版本
 
 ### Requirement: R-platform-015 fasrun 命令行骨架
-FASRUN-DEV-CLI 必须基于 oclif 提供 `fasrun` 命令行，包的 bin 同时提供 fasrun 与别名 fas，至少包含 `spec validate`、`spec archive`、`migrate`、`seed`、`plugin new`、`init`、`check` 命令；每个命令有帮助说明，出错时以非零状态退出。`fasrun init` 必须在目标目录生成 fasrun.yaml、Fasfile 模板与规格目录（specs/ 与 changes/），已存在的文件不覆盖。`fasrun check` 必须依次运行 `fasrun spec validate` 与 Fasfile、fasrun.yaml 的 schema 校验（R-platform-017），任一失败即以非零状态退出。命令行读取的环境变量为 FASRUN_ENDPOINT、FASRUN_API_KEY、FASRUN_CONFIG、FASRUN_LOG_LEVEL，不带组件段。`fasrun init` 还必须在仓库没有 AGENTS.md 时生成一份执行器说明，并保证 CLAUDE.md 中有一行 `@AGENTS.md` 引用它：CLAUDE.md 不存在时创建，存在但没有该引用时追加一行，已有内容不改写。`fasrun login` 必须以 OAuth 设备授权登录：显示验证地址与用户码，授权完成后把令牌写入本机配置目录（FASRUN_CONFIG 指定）的凭据文件，文件权限为 0600，令牌不写入日志与输出。所有命令必须支持 `--json`：标准输出只有一个 JSON 对象，成功时含结果，失败时含错误码与说明。退出码固定：0 成功，1 检查未通过，2 用法错误（参数无效或缺少必需输入），3 配置或认证错误（缺少配置、未登录、授权被拒绝或过期），4 无法连接服务，5 其他错误。所有命令都必须能非交互运行：标准输入不是终端时不等待任何输入提示，必需的输入只来自参数与环境变量，缺少时以退出码 2 退出并说明缺什么。
+FASRUN-DEV-CLI 必须基于 oclif 提供 `fasrun` 命令行，包的 bin 同时提供 fasrun 与别名 fas，至少包含 `spec validate`、`spec archive`、`migrate`、`seed`、`plugin new`、`init`、`check` 命令；每个命令有帮助说明，出错时以非零状态退出。`fasrun init` 必须在目标目录生成 fasrun.yaml、Fasfile 模板与规格目录（specs/ 与 changes/），已存在的文件不覆盖。`fasrun check` 必须依次运行 `fasrun spec validate` 与 Fasfile、fasrun.yaml 的 schema 校验（R-platform-017），任一失败即以非零状态退出。命令行读取的环境变量为 FASRUN_ENDPOINT、FASRUN_API_KEY、FASRUN_CONFIG、FASRUN_LOG_LEVEL，不带组件段。`fasrun init` 还必须在仓库没有 AGENTS.md 时生成一份执行器说明，并总是保证 CLAUDE.md 中有一行 `@AGENTS.md` 引用它：已有该引用时不重复添加；CLAUDE.md 存在但没有该引用时只追加这一行，不改动其他内容；CLAUDE.md 不存在时新建且只含这一行；已有的 AGENTS.md 不改动。命令结束时列出新建与修改的文件，`--json` 的结果中同样列出。`fasrun login` 必须以 OAuth 设备授权登录：显示验证地址与用户码，授权完成后把令牌写入本机配置目录（FASRUN_CONFIG 指定）的凭据文件，文件权限为 0600，令牌不写入日志与输出。所有命令必须支持 `--json`：标准输出只有一个 JSON 对象，成功时含结果，失败时含错误码与说明。退出码固定：0 成功，1 检查未通过，2 用法错误（参数无效或缺少必需输入），3 配置或认证错误（缺少配置、未登录、授权被拒绝或过期），4 无法连接服务，5 其他错误。所有命令都必须能非交互运行：标准输入不是终端时不等待任何输入提示，必需的输入只来自参数与环境变量，缺少时以退出码 2 退出并说明缺什么。
 #### Scenario: R-platform-015.S1 列出命令
 - GIVEN 已完成构建
 - WHEN 执行 `fasrun --help`，再执行 `fas --help`
@@ -244,10 +244,10 @@ FASRUN-DEV-CLI 必须基于 oclif 提供 `fasrun` 命令行，包的 bin 同时�
 - GIVEN 单仓根目录
 - WHEN 执行 `fasrun check`
 - THEN 先运行 `fasrun spec validate fasrun/`，再校验 Fasfile 与 fasrun.yaml，全部通过时以 0 退出；把 Fasfile 的 version 改为 2 后再执行，以非零状态退出并指明 Fasfile
-#### Scenario: R-platform-015.S4 init 生成 AGENTS.md 并在 CLAUDE.md 中引用
-- GIVEN 一个空目录，以及一个已有 AGENTS.md、CLAUDE.md 中没有 `@AGENTS.md` 的目录
-- WHEN 分别执行 `fasrun init`，再对第二个目录执行一次
-- THEN 空目录中生成 AGENTS.md 与内容为 `@AGENTS.md` 的 CLAUDE.md；第二个目录的 AGENTS.md 不变，CLAUDE.md 保留原有内容并追加一行 `@AGENTS.md`，再次执行不重复追加
+#### Scenario: R-platform-015.S4 init 总是在 CLAUDE.md 中引用 AGENTS.md，且只加这一行
+- GIVEN 三个目录：空目录；已有 AGENTS.md、CLAUDE.md 中没有 `@AGENTS.md` 的目录；已有 AGENTS.md、CLAUDE.md 中已有 `@AGENTS.md` 的目录
+- WHEN 分别执行 `fasrun init`
+- THEN 空目录中生成 AGENTS.md，并新建只含一行 `@AGENTS.md` 的 CLAUDE.md；第二个目录的 AGENTS.md 不变，CLAUDE.md 原有内容逐字保留，只在末尾多出一行 `@AGENTS.md`；第三个目录的 AGENTS.md 与 CLAUDE.md 都不变，不重复添加引用
 #### Scenario: R-platform-015.S5 fasrun login 以设备授权登录
 - GIVEN 一个提供设备授权端点与令牌端点的授权服务
 - WHEN 非交互地执行 `fasrun login`，并在授权服务中完成授权；另一次在授权服务中拒绝
@@ -260,6 +260,10 @@ FASRUN-DEV-CLI 必须基于 oclif 提供 `fasrun` 命令行，包的 bin 同时�
 - GIVEN 标准输入不是终端
 - WHEN 执行缺少必需输入的命令：未给插件名的 `fasrun plugin new`，以及未配置 FASRUN_ENDPOINT 的 `fasrun login`
 - THEN 命令不等待输入，立即以说明缺什么的错误退出，退出码分别为 2 与 3
+#### Scenario: R-platform-015.S8 init 结束时列出改动的文件
+- GIVEN 一个已有 Fasfile、AGENTS.md 与不含 `@AGENTS.md` 的 CLAUDE.md 的目录
+- WHEN 执行 `fasrun init`，再以 `--json` 对同一目录执行一次
+- THEN 第一次的输出列出新建的文件（fasrun.yaml、fasrun/specs/、fasrun/changes/）与修改的文件（CLAUDE.md），不列出未改动的 Fasfile 与 AGENTS.md；第二次的 JSON 结果中新建与修改的列表都为空
 
 ### Requirement: R-platform-016 许可证与贡献签名
 仓库根目录必须放 AGPL-3.0 的 LICENSE。供插件开发使用的包（backend-plugin-api、frontend-plugin-api、contracts-core、ui、test-utils、cli-templates，以及各插件的 -common、-node、-react 包）必须各自放 Apache-2.0 的 LICENSE，并在 package.json 中声明 Apache-2.0；其余包声明 AGPL-3.0-only。声明为 Apache-2.0 的包不能依赖声明为 AGPL-3.0-only 的工作区包。CI 必须检查许可声明的一致性；外部贡献者（不是组织成员或仓库协作者）提交的 PR 中，每个提交都必须带 DCO 签名（Signed-off-by），组织成员与本仓库 GitHub App 的提交不要求。
