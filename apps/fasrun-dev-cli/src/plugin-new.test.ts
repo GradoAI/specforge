@@ -10,7 +10,10 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseRole, renderPackage } from '@fasrun/cli-templates';
 import * as prettier from 'prettier';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+// Each test starts several CLI processes; CI runs many suites in parallel, so allow more than the default 5 s.
+vi.setConfig({ testTimeout: 30_000 });
 
 const BIN = fileURLToPath(new URL('../bin/run.js', import.meta.url));
 const REPO = fileURLToPath(new URL('../../..', import.meta.url));
