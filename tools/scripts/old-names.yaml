@@ -1,0 +1,20 @@
+# Old names that must not remain anywhere in the repository (R-platform-018).
+# This file is the only place that lists them; the residue check TC-PLATFORM-054 reads it.
+names:
+  - pattern: specforge
+    ignore_case: true
+    description: old product name
+  - pattern: '\bSF_'
+    description: old environment variable prefix
+  - pattern: '--sf-'
+    description: old design token prefix
+  - pattern: '(^|[^A-Za-z0-9_./-])sf([^A-Za-z0-9_-]|$)'
+    description: old command name as a standalone word
+# The exceptions are fixed by R-platform-018; widening them needs a spec change.
+exceptions:
+  files:
+    - tools/scripts/old-names.yaml
+  directories:
+    - fasrun/changes/archive/*-SF-2-rename-fasrun/
+  text:
+    - GradoAI/sf-optio

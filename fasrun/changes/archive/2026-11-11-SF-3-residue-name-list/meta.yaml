@@ -6,6 +6,11 @@ size: small
 template_version: 1
 layers:
   requirements:
-    status: in_review
+    status: approved
+    pr: 20
   tasks:
-    status: in_review
+    status: approved
+    pr: 20
+delivery:
+  prs: [23]
+archived: 2026-11-11
