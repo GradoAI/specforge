@@ -9,7 +9,4 @@ packages:
 minimumReleaseAge: 10080
 strictDepBuilds: true
 # Explicitly denied: optional native add-ons and a notice script pulled in by testcontainers; none is needed.
-allowBuilds:
-  cpu-features: false
-  protobufjs: false
-  ssh2: false
+allowBuilds: { cpu-features: false, protobufjs: false, ssh2: false }
