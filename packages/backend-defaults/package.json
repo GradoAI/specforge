@@ -1,0 +1,37 @@
+{
+  "name": "@fasrun/backend-defaults",
+  "version": "0.0.0",
+  "description": "Default backend: plugin assembly and the config, logger, database and HTTP router services",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": {
+      "@fasrun/source": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fasrun/backend-plugin-api": "workspace:*",
+    "@fasrun/contracts-core": "workspace:*",
+    "awilix": "13.0.5",
+    "drizzle-orm": "0.45.4",
+    "fastify": "5.12.8",
+    "pg": "8.23.1",
+    "pino": "10.4.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
+    "tsdown": "0.23.5",
+    "vitest": "4.1.12"
+  }
+}

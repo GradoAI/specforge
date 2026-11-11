@@ -1,0 +1,25 @@
+{
+  "name": "@fasrun/frontend-app",
+  "version": "0.0.0",
+  "description": "Frontend application shell (placeholder, implemented in M3)",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": {
+      "@fasrun/source": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "tsdown": "0.23.5",
+    "vitest": "4.1.12"
+  }
+}

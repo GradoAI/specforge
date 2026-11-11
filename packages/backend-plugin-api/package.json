@@ -1,0 +1,32 @@
+{
+  "name": "@fasrun/backend-plugin-api",
+  "version": "0.0.0",
+  "description": "Backend plugin API: plugins, modules, service references and extension points",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "@fasrun/source": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fasrun/contracts-core": "workspace:*",
+    "@types/pg": "8.23.1",
+    "drizzle-orm": "0.45.4",
+    "fastify": "5.12.8"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "tsdown": "0.23.5",
+    "vitest": "4.1.12"
+  }
+}

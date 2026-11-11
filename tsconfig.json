@@ -15,6 +15,30 @@
     },
     {
       "path": "tools/scripts"
+    },
+    {
+      "path": "packages/contracts-core"
+    },
+    {
+      "path": "packages/backend-plugin-api"
+    },
+    {
+      "path": "packages/backend-defaults"
+    },
+    {
+      "path": "packages/test-utils"
+    },
+    {
+      "path": "packages/cli-templates"
+    },
+    {
+      "path": "packages/frontend-plugin-api"
+    },
+    {
+      "path": "packages/frontend-app"
+    },
+    {
+      "path": "packages/ui"
     }
   ]
 }
