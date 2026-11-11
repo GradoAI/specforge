@@ -63,12 +63,19 @@ describe('naming and brand (R-platform-018)', () => {
     const exempt = (path: string) =>
       path.startsWith('fasrun/changes/SF-2-rename-fasrun/') ||
       /^fasrun\/changes\/archive\/\d{4}-\d{2}-\d{2}-SF-2-rename-fasrun\//.test(path);
+    // After archiving, R-platform-018 itself lives in the current specs and quotes the names it forbids;
+    // only that requirement block is skipped there (raised with the requirements reviewer on #11).
+    const selfQuoting = /^### Requirement: R-platform-018 /;
     const hits: string[] = [];
     for (const path of trackedFiles().filter((p) => !exempt(p))) {
+      let inSelfQuoting = false;
       read(path)
         .split('\n')
         .forEach((line, index) => {
-          if (line.includes('GradoAI/sf-optio')) return;
+          if (path.startsWith('fasrun/specs/') && line.startsWith('### Requirement: ')) {
+            inSelfQuoting = selfQuoting.test(line);
+          }
+          if (inSelfQuoting || line.includes('GradoAI/sf-optio')) return;
           if ([oldName, envPrefix, designToken, command].some((re) => re.test(line))) hits.push(`${path}:${index + 1}`);
         });
     }

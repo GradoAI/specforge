@@ -6,4 +6,8 @@ size: small
 template_version: 1
 layers:
   requirements:
-    status: in_review
+    status: approved
+    pr: 12
+delivery:
+  prs: [13, 14, 15]
+archived: 2026-11-11
