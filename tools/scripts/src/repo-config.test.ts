@@ -2,7 +2,7 @@
 // TC-PLATFORM-051 — R-platform-017.S1: the repository's fasrun.yaml and Fasfile pass the minimal schema.
 // TC-PLATFORM-052 — R-platform-017.S2: unknown top-level keys and a wrong version are rejected.
 // TC-PLATFORM-053 — R-platform-017.S3: fasrun.local.yaml is ignored by git.
-// TC-PLATFORM-054 — R-platform-018.S1: no old product names remain.
+// TC-PLATFORM-054 — R-platform-018.S1: no old names from the residue check configuration remain.
 // TC-PLATFORM-055 — R-platform-018.S2: workspace packages use the new names.
 // TC-PLATFORM-056 — R-platform-018.S3: README and CONTRIBUTING follow the brand rules.
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
+import { findOldNames, loadOldNames, OLD_NAMES_CONFIG } from './old-names.js';
 import { validateRepoConfig } from './repo-config.js';
 
 const REPO_ROOT = resolve(import.meta.dirname, '../../..');
@@ -52,34 +53,16 @@ describe('repository config (R-platform-017)', () => {
 });
 
 describe('naming and brand (R-platform-018)', () => {
-  it('TC-PLATFORM-054 no old product names remain', () => {
-    // Patterns are assembled so this file does not match itself.
-    const oldName = new RegExp(['spec', 'forge'].join(''), 'i');
-    const envPrefix = new RegExp(`\\b${'S'}F_`);
-    const designToken = new RegExp(`--${'s'}f-`);
-    const command = new RegExp(`(^|[^A-Za-z0-9_./-])${'s'}f([^A-Za-z0-9_-]|$)`);
-    // Exceptions per R-platform-018: the archived repository name GradoAI/sf-optio, and the SF-2 change
-    // directory with its archive directory, which describe the rename itself.
-    const exempt = (path: string) =>
-      path.startsWith('fasrun/changes/SF-2-rename-fasrun/') ||
-      /^fasrun\/changes\/archive\/\d{4}-\d{2}-\d{2}-SF-2-rename-fasrun\//.test(path);
-    // After archiving, R-platform-018 itself lives in the current specs and quotes the names it forbids;
-    // only that requirement block is skipped there (raised with the requirements reviewer on #11).
-    const selfQuoting = /^### Requirement: R-platform-018 /;
-    const hits: string[] = [];
-    for (const path of trackedFiles().filter((p) => !exempt(p))) {
-      let inSelfQuoting = false;
-      read(path)
-        .split('\n')
-        .forEach((line, index) => {
-          if (path.startsWith('fasrun/specs/') && line.startsWith('### Requirement: ')) {
-            inSelfQuoting = selfQuoting.test(line);
-          }
-          if (inSelfQuoting || line.includes('GradoAI/sf-optio')) return;
-          if ([oldName, envPrefix, designToken, command].some((re) => re.test(line))) hits.push(`${path}:${index + 1}`);
-        });
-    }
-    expect(hits).toEqual([]);
+  it('TC-PLATFORM-054 no old names from tools/scripts/old-names.yaml remain', () => {
+    const config = loadOldNames(join(REPO_ROOT, OLD_NAMES_CONFIG));
+    // R-platform-018 fixes the exceptions: the list itself, GradoAI/sf-optio and the SF-2 archive directory.
+    expect(config.exceptions).toEqual({
+      files: [OLD_NAMES_CONFIG],
+      directories: ['fasrun/changes/archive/*-SF-2-rename-fasrun/'],
+      text: ['GradoAI/sf-optio'],
+    });
+    expect(config.names.length).toBeGreaterThan(0);
+    expect(findOldNames(config, trackedFiles(), read)).toEqual([]);
   });
 
   it('TC-PLATFORM-055 workspace packages use the new names', () => {
