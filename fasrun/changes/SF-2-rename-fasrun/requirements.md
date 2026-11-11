@@ -22,7 +22,7 @@
 
 ### US-1 单仓只使用新名字（P1）
 作为 Fasrun 的开发者，我要单仓中的目录、包、命令、标识与文档都使用 fasrun 命名，以便后续的代码、CI 检查名、镜像与部署从一开始就用新名字，不出现新旧混用。
-独立验证：全仓搜索 specforge、SpecForge、SF_、--sf- 与独立的 sf 命令，除 GradoAI/sf-optio 外没有结果；pnpm install、typecheck、lint、format、test 全部通过；CODEOWNERS 用例以新路径通过；README 首段为实体定义句并链接 https://fasrun.dev。
+独立验证：全仓搜索 specforge、SpecForge、SF_、--sf- 与独立的 sf 命令，除 GradoAI/sf-optio，以及 SF-2 的变更目录 fasrun/changes/SF-2-rename-fasrun/ 及其归档目录外没有结果；pnpm install、typecheck、lint、format、test 全部通过；CODEOWNERS 用例以新路径通过；README 首段为实体定义句并链接 https://fasrun.dev。
 实现它的需求条目：R-platform-018
 
 ### US-2 仓库声明 Fasrun 配置与长期约束（P1）
@@ -36,7 +36,7 @@
 实现它的需求条目：R-platform-015
 
 ## 成功标准
-- 全仓残留检查只命中 GradoAI/sf-optio。
+- 全仓残留检查除 GradoAI/sf-optio，以及 SF-2 的变更目录 fasrun/changes/SF-2-rename-fasrun/ 及其归档目录外没有结果。
 - 自举期的本地合并门槛（pnpm install --frozen-lockfile、typecheck、lint、format、commitlint、test、gitleaks）全部通过。
 - TC-PLATFORM-007、TC-PLATFORM-008、TC-PLATFORM-009 以新路径通过。
 - fasrun.yaml 与 Fasfile 通过本阶段的最小 schema 校验。
