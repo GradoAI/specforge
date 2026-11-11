@@ -1,7 +1,7 @@
 {
   "name": "@fasrun/test-utils",
   "version": "0.0.0",
-  "description": "Test utilities for plugins (placeholder until SF-1 T009)",
+  "description": "Test utilities for plugins: in-memory test backend, mock services and PostgreSQL via Testcontainers",
   "license": "Apache-2.0",
   "type": "module",
   "exports": {
@@ -9,17 +9,36 @@
       "@fasrun/source": "./src/index.ts",
       "types": "./dist/index.d.mts",
       "default": "./dist/index.mjs"
+    },
+    "./global-setup": {
+      "@fasrun/source": "./src/global-setup.ts",
+      "types": "./dist/global-setup.d.mts",
+      "default": "./dist/global-setup.mjs"
     }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsdown"
+    "build": "tsdown src/index.ts src/global-setup.ts --format esm --platform node --dts",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
     "tsdown": "0.23.5",
     "vitest": "4.1.12"
+  },
+  "dependencies": {
+    "@fasrun/backend-plugin-api": "workspace:*",
+    "@fasrun/contracts-core": "workspace:*",
+    "@testcontainers/postgresql": "12.2.1",
+    "awilix": "13.0.5",
+    "drizzle-orm": "0.45.4",
+    "fastify": "5.12.8",
+    "pg": "8.23.1"
+  },
+  "peerDependencies": {
+    "vitest": "^4.1.0"
   }
 }

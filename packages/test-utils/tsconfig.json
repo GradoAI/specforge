@@ -2,10 +2,18 @@
   "extends": "../../tools/tsconfig/tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist/tsc",
-    "rootDir": "src",
+    "rootDir": ".",
     "emitDeclarationOnly": true,
     "types": ["node"],
     "customConditions": ["@fasrun/source"]
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "vitest.config.ts"],
+  "references": [
+    {
+      "path": "../backend-plugin-api"
+    },
+    {
+      "path": "../contracts-core"
+    }
+  ]
 }

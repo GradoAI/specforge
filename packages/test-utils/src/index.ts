@@ -1,4 +1,11 @@
-/** Placeholder of @fasrun/test-utils; implemented in SF-1 T009 (test backend and Testcontainers). */
-export const PACKAGE_STATUS = 'placeholder' as const;
-
-export type PackageStatus = typeof PACKAGE_STATUS;
+export { mockServices, type LogEntry, type MockLogger } from './mock-services.js';
+export {
+  APP_ROLE,
+  createTestDatabase,
+  OWNER_ROLE,
+  prepareTestPostgres,
+  TEMPLATE_DATABASE,
+  type TestDatabase,
+  type TestPostgres,
+} from './postgres.js';
+export { startTestBackend, type StartTestBackendOptions, type TestBackend } from './test-backend.js';
