@@ -157,8 +157,8 @@
 - `fasrun init [目录]`：
   - 生成 `fasrun.yaml`、Fasfile 模板与 `fasrun/specs/`、`fasrun/changes/`，已存在的文件不覆盖（R-platform-015.S2）；
   - 仓库没有 `AGENTS.md` 时生成一份执行器说明模板（技术方案 2.11「执行器说明文件」）；
-  - `CLAUDE.md` 不存在时创建，内容为 `@AGENTS.md`；存在但没有单独一行 `@AGENTS.md` 时在末尾追加该行；已有内容不改写，重复执行不重复追加；
-  - `--json` 的结果列出新建、追加与跳过的文件。
+  - 总是保证 `CLAUDE.md` 中有单独一行 `@AGENTS.md`：已有时不动；存在但没有时只在末尾追加这一行（原文件不以换行结尾时先补一个换行），其他内容逐字保留；不存在时新建且只含这一行；已有的 `AGENTS.md` 不改动；
+  - 命令结束时在标准错误列出新建与修改的文件；`--json` 的结果为 `{ "created": [...], "modified": [...], "unchanged": [...] }`。
 - `fasrun login`（技术方案 2.6）：
   - 读取 `<FASRUN_ENDPOINT>/.well-known/oauth-authorization-server`（RFC 8414），按其中的 `device_authorization_endpoint` 与 `token_endpoint` 走 OAuth 2.0 设备授权（RFC 8628），客户端为在 Keycloak 中预先登记的公开客户端 `fasrun-cli`。该元数据由 fasrun-core-svc 在接入 Keycloak 后提供（M1）；M0 的用例使用模拟的授权服务；
   - 标准错误输出验证地址（`verification_uri_complete` 优先）与用户码，按返回的 `interval` 轮询；收到 `slow_down` 时把间隔加 5 秒；`access_denied` 与 `expired_token` 分别报 `FASRUN_AUTH_DENIED`、`FASRUN_AUTH_EXPIRED`（退出码 3）；
