@@ -6,3 +6,5 @@ export interface GovernanceStatus {
   plugin: typeof GOVERNANCE_PLUGIN_ID;
   status: 'ok';
 }
+
+export * from './conditions/index.js';
