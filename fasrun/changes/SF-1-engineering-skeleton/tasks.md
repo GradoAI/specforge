@@ -20,7 +20,7 @@
 - [x] T016 规格归档 fasrun spec archive — 对应 R-spec-004、D-13；依赖 T015；修改范围 plugins/spec/spec-common/、apps/fasrun-dev-cli/；用例 TC-SPEC-013（R-spec-004.S1）、TC-SPEC-014（R-spec-004.S2）
 - [x] T017 [P] 「星河科技」数据集与 fasrun seed（以 fasrun_app 经 withOrg 写入） — 对应 R-platform-011、D-15；依赖 T012；修改范围 packages/test-utils/、apps/fasrun-dev-cli/；用例 TC-PLATFORM-034（R-platform-011.S1）、TC-PLATFORM-035（R-platform-011.S2）、TC-PLATFORM-036（R-platform-011.S3）
 - [x] T018 [P] 容器镜像与漏洞扫描 — 对应 R-platform-013、D-17；依赖 T012；修改范围 deploy/docker/、.github/workflows/；用例 TC-PLATFORM-041（R-platform-013.S1）
-- [ ] T019 Helm chart、k3d 一键部署与每日完整集 — 对应 R-platform-014、D-18；依赖 T018；修改范围 deploy/helm/、deploy/k3d/、.github/workflows/；用例 TC-PLATFORM-042（R-platform-014.S1）、TC-PLATFORM-043（R-platform-014.S2）、TC-PLATFORM-044（R-platform-014.S3）
+- [x] T019 Helm chart、k3d 一键部署与每日完整集 — 对应 R-platform-014、D-18；依赖 T018；修改范围 deploy/helm/、deploy/k3d/、.github/workflows/；用例 TC-PLATFORM-042（R-platform-014.S1）、TC-PLATFORM-043（R-platform-014.S2）、TC-PLATFORM-044（R-platform-014.S3）
 - [ ] T020 收尾：归档 SF-1 — 对应 R-spec-004、D-13；依赖 T005、T013、T016、T017、T019；修改范围 fasrun/；用例 无新增（完成标准：`fasrun spec validate fasrun/` 通过，变更目录位于 changes/archive/ 下）
 
 ## 说明

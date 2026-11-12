@@ -1,0 +1,8 @@
+clusterName: fasrun-database
+# Immutable multi-architecture PostgreSQL 18.3 image, built 2026-05-11.
+imageName: ghcr.io/cloudnative-pg/postgresql:18.3-minimal-trixie@sha256:8d3183ef537b17efbb2e6e6665852a7c0d8dc4a3f3b91c11f0e8a2d056799880
+storage:
+  size: 1Gi
+existingSecrets:
+  owner: fasrun-owner
+  app: fasrun-app

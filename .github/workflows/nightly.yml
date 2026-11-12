@@ -1,0 +1,84 @@
+# SF-1 T019 / D-16, D-18: the delivered full suite plus real k3d deployment acceptance.
+name: Nightly full suite
+
+on:
+  schedule:
+    - cron: '23 18 * * *' # 02:23 Asia/Taipei; GitHub schedules use UTC.
+  workflow_dispatch:
+  # Exercise changes to this workflow and deployment code before human merge.
+  pull_request:
+    paths:
+      - '.github/workflows/nightly.yml'
+      - 'deploy/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  nightly-full:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      FASRUN_BUILD_PLATFORM: linux/amd64
+      FASRUN_ARTIFACT_DIR: ${{ runner.temp }}/fasrun-nightly
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm format
+      - name: Run the full delivered unit and integration suite without cache
+        run: |
+          set -euo pipefail
+          mkdir -p "$FASRUN_ARTIFACT_DIR"
+          pnpm test --force --continue 2>&1 | tee "$FASRUN_ARTIFACT_DIR/tests.log"
+      - name: Validate specifications and real migration checks
+        run: |
+          set -euo pipefail
+          node apps/fasrun-dev-cli/bin/run.js spec validate fasrun/
+          node apps/fasrun-dev-cli/bin/run.js check
+          pnpm --filter @fasrun/migration-check... build
+          pnpm --dir tools/migration-check check
+      - name: Install pinned deployment tools
+        run: |
+          set -euo pipefail
+          bash deploy/k3d/install-tools.sh "$RUNNER_TEMP/fasrun-bin"
+          echo "$RUNNER_TEMP/fasrun-bin" >> "$GITHUB_PATH"
+      - name: Check Helm rendering and deployment invariants
+        run: |
+          set -euo pipefail
+          helm lint deploy/helm/fasrun deploy/helm/fasrun-database
+          node --test deploy/helm/verify.test.mjs
+      - name: TC-PLATFORM-042 through 044 real deployment acceptance
+        run: |
+          set -euo pipefail
+          mkdir -p "$FASRUN_ARTIFACT_DIR"
+          bash deploy/k3d/verify.sh 2>&1 | tee "$FASRUN_ARTIFACT_DIR/deployment.log"
+      - name: Preserve deployment diagnostics (no Secret data or Pod environment dumps)
+        if: always()
+        run: |
+          mkdir -p "$FASRUN_ARTIFACT_DIR"
+          kubectl --context k3d-fasrun-dev get pods,deployments,jobs -A -o wide > "$FASRUN_ARTIFACT_DIR/resources.log" 2>&1 || true
+          kubectl --context k3d-fasrun-dev get events -A --sort-by=.lastTimestamp > "$FASRUN_ARTIFACT_DIR/events.log" 2>&1 || true
+          kubectl --context k3d-fasrun-dev -n fasrun logs job/fasrun-migrate > "$FASRUN_ARTIFACT_DIR/migration.log" 2>&1 || true
+      - name: Upload full-suite evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: fasrun-nightly-evidence
+          path: ${{ env.FASRUN_ARTIFACT_DIR }}/*.log
+          if-no-files-found: error
+      - name: Remove this runner's disposable cluster
+        if: always()
+        run: k3d cluster delete fasrun-dev

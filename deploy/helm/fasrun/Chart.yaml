@@ -1,0 +1,5 @@
+apiVersion: v2
+name: fasrun
+description: Fasrun services and migration gate
+version: 0.1.0
+type: application
