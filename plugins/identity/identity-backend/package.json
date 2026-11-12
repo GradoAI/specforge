@@ -12,19 +12,26 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "migrations",
+    "drizzle.config.ts",
+    "src/infrastructure/schema"
   ],
   "scripts": {
     "build": "tsdown",
     "test": "vitest run"
   },
   "dependencies": {
+    "@fasrun/backend-defaults": "workspace:*",
     "@fasrun/backend-plugin-api": "workspace:*",
     "drizzle-orm": "0.45.4"
   },
   "devDependencies": {
+    "@fasrun/contracts-core": "workspace:*",
     "@fasrun/test-utils": "workspace:*",
     "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
+    "pg": "8.23.1",
     "tsdown": "0.23.5",
     "vitest": "4.1.12"
   }

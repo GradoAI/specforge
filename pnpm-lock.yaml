@@ -679,6 +679,9 @@ importers:
 
   plugins/identity/identity-backend:
     dependencies:
+      '@fasrun/backend-defaults':
+        specifier: workspace:*
+        version: link:../../../packages/backend-defaults
       '@fasrun/backend-plugin-api':
         specifier: workspace:*
         version: link:../../../packages/backend-plugin-api
@@ -686,12 +689,21 @@ importers:
         specifier: 0.45.4
         version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)
     devDependencies:
+      '@fasrun/contracts-core':
+        specifier: workspace:*
+        version: link:../../../packages/contracts-core
       '@fasrun/test-utils':
         specifier: workspace:*
         version: link:../../../packages/test-utils
       '@types/node':
         specifier: 24.19.2
         version: 24.19.2
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
       tsdown:
         specifier: 0.23.5
         version: 0.23.5(typescript@6.0.3)

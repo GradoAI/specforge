@@ -1,0 +1,152 @@
+{
+  "id": "d95dc786-4089-4177-a469-62fef760a84c",
+  "prevId": "2c03ed51-a427-40c2-b510-6d8263544309",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "identity.organization": {
+      "name": "organization",
+      "schema": "identity",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deactivated_at": {
+          "name": "deactivated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "ix_organization_org_created_id": {
+          "name": "ix_organization_org_created_id",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_organization": {
+          "name": "pk_organization",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {
+        "uq_organization_slug": {
+          "name": "uq_organization_slug",
+          "columns": ["slug"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "organization_org_isolation": {
+          "name": "organization_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"identity\".\"organization\".\"org_id\" = current_setting('fasrun.org_id', true)",
+          "withCheck": "\"identity\".\"organization\".\"org_id\" = current_setting('fasrun.org_id', true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_organization_id": {
+          "name": "ck_organization_id",
+          "value": "\"identity\".\"organization\".\"id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_organization_org_id_self": {
+          "name": "ck_organization_org_id_self",
+          "value": "\"identity\".\"organization\".\"org_id\" = \"identity\".\"organization\".\"id\""
+        },
+        "ck_organization_name_length": {
+          "name": "ck_organization_name_length",
+          "value": "char_length(\"identity\".\"organization\".\"name\") between 1 and 200"
+        }
+      },
+      "isRLSEnabled": true
+    }
+  },
+  "enums": {},
+  "schemas": {
+    "identity": "identity"
+  },
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
