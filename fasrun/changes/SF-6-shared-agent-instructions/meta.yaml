@@ -1,0 +1,8 @@
+work: SF-6
+title: 仓库自身采用共享执行器纪律入口
+issue: https://github.com/fasrun/fasrun/issues/53
+size: small
+template_version: 1
+layers:
+  requirements:
+    status: in_review
