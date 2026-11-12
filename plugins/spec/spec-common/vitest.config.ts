@@ -5,7 +5,7 @@ export default defineConfig({
     coverage: {
       enabled: true,
       provider: 'v8',
-      include: ['src/validation.ts'],
+      include: ['src/validation.ts', 'src/archive.ts'],
       reporter: ['text', 'json-summary'],
       thresholds: { branches: 90 },
     },

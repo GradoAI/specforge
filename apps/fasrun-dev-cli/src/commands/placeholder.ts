@@ -1,21 +1,10 @@
 // Commands declared now and implemented by later SF-1 tasks (SF-1 D-10): they parse their arguments, then exit
 // with code 5 and FASRUN_NOT_IMPLEMENTED naming the task.
-import { Args, Flags } from '@oclif/core';
 import { BaseCommand } from '../base.js';
 import { CliError, CliErrorCodes } from '../errors.js';
 
 function notImplemented(command: string, task: string): never {
   throw new CliError(CliErrorCodes.NOT_IMPLEMENTED, `fasrun ${command} is delivered by SF-1 ${task}`);
-}
-
-export class SpecArchive extends BaseCommand {
-  static override summary = 'Merge a delivered change into the current specs and archive it';
-  static override args = { change: Args.string({ description: 'Change directory', required: true }) };
-  static override flags = { date: Flags.string({ description: 'Archive date YYYY-MM-DD (default: today, UTC)' }) };
-  async run(): Promise<never> {
-    await this.parse(SpecArchive);
-    return notImplemented('spec archive', 'T015');
-  }
 }
 
 export class Seed extends BaseCommand {

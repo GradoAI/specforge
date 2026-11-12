@@ -8,3 +8,4 @@ export interface SpecStatus {
 }
 
 export * from './validation.js';
+export * from './archive.js';

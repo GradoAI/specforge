@@ -13,7 +13,7 @@ async function readRequired(path: string): Promise<string> {
   }
 }
 
-async function collect(root: string): Promise<SpecFiles> {
+export async function collect(root: string): Promise<SpecFiles> {
   const files: Record<string, string> = {};
   async function walk(relative: string) {
     const entries = await readdir(join(root, relative), { withFileTypes: true });
@@ -32,7 +32,7 @@ async function collect(root: string): Promise<SpecFiles> {
 }
 
 /** Configuration is required for scoped tasks; init's empty spec trees need no allow-list yet. */
-export async function runSpecValidate(root: string): Promise<{ files: number; errors: [] }> {
+export async function readSpecSnapshot(root: string) {
   const files = await collect(root);
   let allowedPaths: string[] = [];
   let text: string | undefined;
@@ -66,6 +66,11 @@ export async function runSpecValidate(root: string): Promise<{ files: number; er
       );
     allowedPaths = config.allowedPaths as string[];
   }
+  return { files, allowedPaths };
+}
+
+export async function runSpecValidate(root: string): Promise<{ files: number; errors: [] }> {
+  const { files, allowedPaths } = await readSpecSnapshot(root);
   const errors = validateSpecs(files, allowedPaths);
   if (errors.length)
     throw new CliError(
