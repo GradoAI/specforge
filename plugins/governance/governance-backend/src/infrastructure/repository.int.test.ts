@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import pg from 'pg';
+import type pg from 'pg';
+import { createTestPool, disposeTestDatabase } from './test-pool.js';
 import { newId, jsonValueSchema } from '@fasrun/contracts-core';
 import { createTestDatabase, type TestDatabase } from '@fasrun/test-utils';
 import type { AuditEvent, PolicySnapshot } from '@fasrun/plugin-governance-common';
@@ -44,10 +45,14 @@ const policy = (orgId = orgA): PolicySnapshot => ({
 });
 describe('governance PostgreSQL persistence', () => {
   let database: TestDatabase, owner: pg.Pool, app: pg.Pool, repo: ReturnType<typeof createGovernanceRepository>;
+  const pools: ReturnType<typeof createTestPool>[] = [];
   beforeAll(async () => {
     database = await createTestDatabase(inject('fasrunPostgres'));
-    owner = new pg.Pool({ connectionString: database.ownerUrl });
-    app = new pg.Pool({ connectionString: database.appUrl, max: 5 });
+    const ownerResource = createTestPool('owner', { connectionString: database.ownerUrl });
+    const appResource = createTestPool('app', { connectionString: database.appUrl, max: 5 });
+    pools.push(ownerResource, appResource);
+    owner = ownerResource.pool;
+    app = appResource.pool;
     repo = createGovernanceRepository(app);
     const folder = fileURLToPath(new URL('../../migrations/', import.meta.url));
     const journal = JSON.parse(readFileSync(`${folder}meta/_journal.json`, 'utf8')) as { entries: { tag: string }[] };
@@ -57,9 +62,9 @@ describe('governance PostgreSQL persistence', () => {
     );
   });
   afterAll(async () => {
-    await app?.end();
-    await owner?.end();
-    await database?.drop();
+    await disposeTestDatabase(pools, async () => {
+      await database?.drop();
+    });
   });
   it('TC-SF5-GOVERNANCE-002 persists versioned policy/budgets atomically, owner-bound RLS and rollback', async () => {
     const a = policy(),
