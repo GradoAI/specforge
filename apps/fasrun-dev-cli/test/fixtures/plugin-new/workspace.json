@@ -1,0 +1,14 @@
+{
+  "pnpm-workspace.yaml": "packages:\n  - apps/*\n  - plugins/*/*\n",
+  "tsconfig.json": "{\"files\":[],\"references\":[]}\n",
+  ".prettierrc.json": "{\"printWidth\":120,\"singleQuote\":true,\"trailingComma\":\"all\"}\n",
+  "apps/fasrun-core-svc/src/plugins.ts": "import type { BackendFeature } from '@fasrun/backend-plugin-api';\n// fasrun:plugins:begin\n// fasrun:plugins:end\nexport const plugins: BackendFeature[] = [\n  // fasrun:plugin-list:begin\n  // fasrun:plugin-list:end\n];\n",
+  "apps/fasrun-core-svc/package.json": "{\n  \"name\": \"@fasrun/fasrun-core-svc\",\n  \"dependencies\": {}\n}\n",
+  "apps/fasrun-core-svc/tsconfig.json": "{\"files\":[],\"references\":[]}\n",
+  "apps/fasrun-connect-svc/src/plugins.ts": "import type { BackendFeature } from '@fasrun/backend-plugin-api';\n// fasrun:plugins:begin\n// fasrun:plugins:end\nexport const plugins: BackendFeature[] = [\n  // fasrun:plugin-list:begin\n  // fasrun:plugin-list:end\n];\n",
+  "apps/fasrun-connect-svc/package.json": "{\n  \"name\": \"@fasrun/fasrun-connect-svc\",\n  \"dependencies\": {}\n}\n",
+  "apps/fasrun-connect-svc/tsconfig.json": "{\"files\":[],\"references\":[]}\n",
+  "apps/fasrun-node-svc/src/plugins.ts": "import type { BackendFeature } from '@fasrun/backend-plugin-api';\n// fasrun:plugins:begin\n// fasrun:plugins:end\nexport const plugins: BackendFeature[] = [\n  // fasrun:plugin-list:begin\n  // fasrun:plugin-list:end\n];\n",
+  "apps/fasrun-node-svc/package.json": "{\n  \"name\": \"@fasrun/fasrun-node-svc\",\n  \"dependencies\": {}\n}\n",
+  "apps/fasrun-node-svc/tsconfig.json": "{\"files\":[],\"references\":[]}\n"
+}

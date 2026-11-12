@@ -2,14 +2,12 @@
 // TC-PLATFORM-018 — R-platform-006.S1: a backend plugin is generated with four layers and migrations/ and registered.
 // TC-PLATFORM-019 — R-platform-006.S2: an invalid role writes nothing and lists the valid roles.
 // TC-PLATFORM-020 — R-platform-006.S3: an existing package is not overwritten.
-// The nine capability plugins committed under plugins/ must equal what the command generates (golden check).
+// TC-PLATFORM-067 — R-platform-006.S4: CLI output matches fixed fixtures; real plugins can evolve.
 import { execFileSync, spawn } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseRole, renderPackage } from '@fasrun/cli-templates';
-import * as prettier from 'prettier';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 // Each test starts several CLI processes; CI runs many suites in parallel, so allow more than the default 5 s.
@@ -21,23 +19,29 @@ const REPO = fileURLToPath(new URL('../../..', import.meta.url));
 const dirs: string[] = [];
 afterEach(() => dirs.splice(0).forEach((dir) => rmSync(dir, { recursive: true, force: true })));
 
-/** A workspace with the two hosts' plugin lists, package.json and tsconfig, copied from this repository. */
+const FIXTURES = fileURLToPath(new URL('../test/fixtures/plugin-new/', import.meta.url));
+const fixture = (name: string) => JSON.parse(readFileSync(join(FIXTURES, name), 'utf8')) as Record<string, string>;
+
+/** Fixed host markers and formatting configuration, independent of production hosts and plugin contents. */
 function workspace(): string {
   const root = mkdtempSync(join(tmpdir(), 'fasrun-plugin-new-'));
   dirs.push(root);
-  writeFileSync(join(root, 'pnpm-workspace.yaml'), 'packages:\n  - apps/*\n  - plugins/*/*\n');
-  writeFileSync(join(root, 'tsconfig.json'), '{\n  "files": [],\n  "references": []\n}\n');
-  for (const host of ['fasrun-core-svc', 'fasrun-connect-svc']) {
-    mkdirSync(join(root, 'apps', host, 'src'), { recursive: true });
-    cpSync(join(REPO, 'apps', host, 'package.json'), join(root, 'apps', host, 'package.json'));
-    cpSync(join(REPO, 'apps', host, 'tsconfig.json'), join(root, 'apps', host, 'tsconfig.json'));
-    // fasrun-node-svc registers no plugins yet, so its list shows the empty marker blocks.
-    cpSync(join(REPO, 'apps/fasrun-node-svc/src/plugins.ts'), join(root, 'apps', host, 'src', 'plugins.ts'));
+  for (const [path, content] of Object.entries(fixture('workspace.json'))) {
+    mkdirSync(dirname(join(root, path)), { recursive: true });
+    writeFileSync(join(root, path), content);
   }
   return root;
 }
 
-const git = (...args: string[]) => execFileSync('git', args, { cwd: REPO, encoding: 'utf8' });
+function contents(root: string, relative = ''): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const entry of readdirSync(join(root, relative), { withFileTypes: true })) {
+    const path = join(relative, entry.name);
+    if (entry.isDirectory()) Object.assign(result, contents(root, path));
+    else result[path] = readFileSync(join(root, path), 'utf8');
+  }
+  return result;
+}
 
 function cli(args: string[], cwd: string) {
   return new Promise<{ code: number | null; stdout: string; stderr: string }>((resolve) => {
@@ -64,7 +68,7 @@ describe('fasrun plugin new (R-platform-006)', () => {
       expect(existsSync(join(pkg, dir)), dir).toBe(true);
     }
     const hostList = readFileSync(join(root, 'apps/fasrun-core-svc/src/plugins.ts'), 'utf8');
-    // The fixture has no Prettier configuration, so quotes follow Prettier's defaults.
+    // Quote style is not part of the registration contract.
     expect(hostList).toMatch(/import demoPlugin from ["']@fasrun\/plugin-demo-backend["'];/);
     expect(hostList).toMatch(/fasrun:plugin-list:begin\s+demoPlugin,\s+\/\/ fasrun:plugin-list:end/);
     const hostManifest = JSON.parse(readFileSync(join(root, 'apps/fasrun-core-svc/package.json'), 'utf8')) as {
@@ -129,35 +133,47 @@ const CAPABILITIES = [
   'connect',
 ];
 
-describe('the nine capability plugins (R-platform-006)', () => {
-  it('equal the output of fasrun plugin new and are registered in their hosts', async () => {
-    const tracked = git('ls-files', 'plugins').split('\n').filter(Boolean).sort();
-    const expected: string[] = [];
+function assertRegistrations(root: string) {
+  for (const host of ['core', 'connect']) {
+    const dir = join(root, `apps/fasrun-${host}-svc`);
+    const source = readFileSync(join(dir, 'src/plugins.ts'), 'utf8');
+    const manifest = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as {
+      dependencies: Record<string, string>;
+    };
+    const config = JSON.parse(readFileSync(join(dir, 'tsconfig.json'), 'utf8')) as { references: { path: string }[] };
     for (const plugin of CAPABILITIES) {
-      for (const roleName of ['common', 'backend']) {
-        const role = parseRole(roleName);
-        if (!role) throw new Error(roleName);
-        for (const file of renderPackage(plugin, role)) {
-          const path = `plugins/${plugin}/${plugin}-${roleName}/${file.path}`;
-          expected.push(path);
-          const absolute = join(REPO, path);
-          const info = await prettier.getFileInfo(absolute);
-          const content = info.inferredParser
-            ? await prettier.format(file.content, {
-                ...((await prettier.resolveConfig(absolute)) ?? {}),
-                filepath: absolute,
-              })
-            : file.content;
-          expect(readFileSync(absolute, 'utf8'), path).toBe(content);
-        }
+      const belongs = (plugin === 'connect') === (host === 'connect');
+      const packageName = `@fasrun/plugin-${plugin}-backend`;
+      if (belongs) {
+        expect(source).toContain(`import ${plugin}Plugin from '${packageName}';`);
+        expect(source).toMatch(
+          new RegExp(`fasrun:plugin-list:begin[\\s\\S]*\\b${plugin}Plugin,[\\s\\S]*fasrun:plugin-list:end`),
+        );
+        expect(manifest.dependencies[packageName]).toBe('workspace:*');
+        expect(config.references).toContainEqual({ path: `../../plugins/${plugin}/${plugin}-backend` });
+      } else {
+        expect(source).not.toContain(packageName);
+        expect(manifest.dependencies[packageName]).toBeUndefined();
       }
     }
-    expect(tracked).toEqual(expected.sort());
-    const core = readFileSync(join(REPO, 'apps/fasrun-core-svc/src/plugins.ts'), 'utf8');
-    const connect = readFileSync(join(REPO, 'apps/fasrun-connect-svc/src/plugins.ts'), 'utf8');
-    for (const plugin of CAPABILITIES.filter((p) => p !== 'connect'))
-      expect(core, plugin).toContain(`${plugin}Plugin,`);
-    expect(connect).toContain('connectPlugin,');
-    expect(core).not.toContain('connectPlugin');
+  }
+}
+
+describe('scaffolding and real capability plugins (R-platform-006)', () => {
+  it('TC-PLATFORM-067 actual CLI output matches the independent versioned fixture and registers all plugins', async () => {
+    const root = workspace();
+    for (const plugin of CAPABILITIES) {
+      for (const role of ['common', 'backend']) {
+        const run = await cli(['plugin', 'new', plugin, '--role', role, '--json'], root);
+        expect(run.code, run.stderr).toBe(0);
+      }
+    }
+    // Includes the complete file set, including empty .gitkeep files. No renderer supplies expected values.
+    expect(contents(join(root, 'plugins'))).toEqual(fixture('expected.json'));
+    assertRegistrations(root);
+  }, 60_000);
+
+  it('TC-PLATFORM-067 real plugins retain host registrations while their business files evolve', () => {
+    assertRegistrations(REPO);
   });
 });
