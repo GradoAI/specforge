@@ -84,7 +84,7 @@ packages/ 下必须有 backend-plugin-api、backend-defaults、contracts-core、
 - THEN 宿主以非零状态退出，错误中包含错误码、插件名与服务名
 
 ### Requirement: R-platform-006 插件脚手架
-`fasrun plugin new <插件> --role <角色>` 必须按插件包角色生成包：包名为 @fasrun/plugin-<插件>-<角色>；-backend 包按 starter、application、infrastructure、common 四层生成目录并带 migrations/；生成后自动在对应的宿主中注册。九个能力域插件（entry、identity、spec、knowledge、orchestration、environment、governance、insight、connect）的 -common 与 -backend 空骨架必须由它生成。
+`fasrun plugin new <插件> --role <角色>` 必须按插件包角色生成包：包名为 @fasrun/plugin-<插件>-<角色>；-backend 包按 starter、application、infrastructure、common 四层生成目录并带 migrations/；生成后自动在对应的宿主中注册。九个能力域插件（entry、identity、spec、knowledge、orchestration、environment、governance、insight、connect）的 -common 与 -backend 空骨架必须由它生成。这是初始生成要求，真实插件随后可以按已批准任务演进。脚手架输出必须以独立、受版本控制的夹具验证，不要求真实插件持续等同空骨架；宿主注册检查及现有构建、代码检查和测试门槛保持有效。
 #### Scenario: R-platform-006.S1 生成并注册后端插件
 - GIVEN 一个不存在的插件名
 - WHEN 执行 `fasrun plugin new demo --role backend`
@@ -97,6 +97,11 @@ packages/ 下必须有 backend-plugin-api、backend-defaults、contracts-core、
 - GIVEN plugins/demo/demo-backend 已存在
 - WHEN 再次执行 `fasrun plugin new demo --role backend`
 - THEN 命令以非零状态退出，已有文件不变
+
+#### Scenario: R-platform-006.S4 脚手架回归与真实插件演进分离
+- GIVEN 独立、受版本控制的脚手架预期夹具，以及已生成并注册的九个真实插件
+- WHEN 在临时工作区执行脚手架并比较输出，且真实插件按已批准任务新增或修改业务文件
+- THEN 生成文件清单与内容必须匹配预期夹具，生成结果或预期夹具的非预期变化使检查失败；真实插件的业务变化不因偏离空骨架而失败，宿主注册检查及现有质量门槛仍执行
 
 ### Requirement: R-platform-007 数据库表规范与样例表
 每个后端插件必须使用一个以插件名命名的 PostgreSQL schema，表在插件的 infrastructure 层用 Drizzle 定义，迁移放在插件的 migrations/ 中。必须提供带类别前缀的 ULID 生成与校验工具，以及按表设计模板生成主键检查约束的写法。identity.organization 必须作为表设计模板的样例实现：标准列、命名、检查约束、注释齐全，行级安全同时启用 ENABLE 与 FORCE ROW LEVEL SECURITY；服务必须使用不拥有表的数据库角色连接。
