@@ -6,3 +6,4 @@ export interface IdentityStatus {
   plugin: typeof IDENTITY_PLUGIN_ID;
   status: 'ok';
 }
+export * from './control-plane.js';

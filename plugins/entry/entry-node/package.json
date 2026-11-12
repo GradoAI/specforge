@@ -1,0 +1,32 @@
+{
+  "name": "@fasrun/plugin-entry-node",
+  "version": "0.0.0",
+  "description": "Entry control plane service ports and extension points",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "@fasrun/source": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "tsdown": "0.23.5",
+    "vitest": "4.1.12"
+  },
+  "dependencies": {
+    "@fasrun/contracts-core": "workspace:*",
+    "zod": "4.6.7",
+    "@fasrun/backend-plugin-api": "workspace:*",
+    "@fasrun/plugin-entry-common": "workspace:*"
+  }
+}
