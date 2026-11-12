@@ -2,7 +2,7 @@
 
 初始提交背景：需求 #52 已合入 fbe9d6d、设计 #56 已合入 8014163 后，本任务层以 main `8014163082f113c62971a7c21807b8e9f16b72cf` 为基线提交；当时只提交规格，全部任务待实现。该背景不代表当前执行阶段。已批准的需求、设计及 #51 确认原文不修改。
 
-当前执行阶段（2026-11-13 合入对账）：任务层 [#57](https://github.com/fasrun/fasrun/pull/57) 已合入 f542ebd，zjh1978 对任务提交 1e5284f 的 [APPROVED](https://github.com/fasrun/fasrun/pull/57#pullrequestreview-5875098938) 已核验，实施阶段已开始。main 为 2dbd35c；T001–T005 已实际合入，T005 的合入后集成异常正在处理，不能据合入或测试断言通过宣称集成验收成功。层状态同步于 meta.yaml，执行进度以本页及关联 PR 的实际合入事实对账，#50 为工作入口。
+当前执行阶段（2026-11-13 合入对账）：任务层 [#57](https://github.com/fasrun/fasrun/pull/57) 已合入 f542ebd，zjh1978 对任务提交 1e5284f 的 [APPROVED](https://github.com/fasrun/fasrun/pull/57#pullrequestreview-5875098938) 已核验，实施阶段已开始。main 为 2dbd35c；T001–T005 已实际合入，T005 的合入后集成异常已在独立修复 PR #66 完成受影响验证并待人工评审，main 尚未包含修复，不能据合入或测试断言通过宣称主干集成验收成功。层状态同步于 meta.yaml，执行进度以本页及关联 PR 的实际合入事实对账，#50 为工作入口。
 
 | 任务 | 已核验的交付与当前状态 |
 | --- | --- |
@@ -10,9 +10,9 @@
 | T002 | [#58](https://github.com/fasrun/fasrun/pull/58) 已合入 9835a5f；队列 43229824791、主干 43230302298 成功。 |
 | T003 | [#59](https://github.com/fasrun/fasrun/pull/59) 已合入 c2db62d；队列 43229954481、主干 43230402387 成功。 |
 | T004 | [#61](https://github.com/fasrun/fasrun/pull/61) 已合入 49cfc3f；队列 43230306398、主干 43230808076 成功。 |
-| T005 | [#62](https://github.com/fasrun/fasrun/pull/62) 已实际合入 2dbd35c。PR CI 43246732150 成功；首次 merge_group [43248084930](https://github.com/fasrun/fasrun/actions/runs/43248084930) 因 TC-PLATFORM-039 超时退队，同提交唯一一次对照重跑 attempt2 成功，超时根因未充分证明；后续实际队列 [43253272364](https://github.com/fasrun/fasrun/actions/runs/43253272364) 成功并合入。主干 [43253811493](https://github.com/fasrun/fasrun/actions/runs/43253811493) 的治理集成套件虽断言通过，仍因未处理 PostgreSQL 57P01 失败；异常与错误输出脱敏正在独立修复，集成核对尚未完成。勾选仅记录代码实际合入，不覆盖此未解决问题。 |
+| T005 | [#62](https://github.com/fasrun/fasrun/pull/62) 已实际合入 2dbd35c。PR CI 43246732150 成功；首次 merge_group [43248084930](https://github.com/fasrun/fasrun/actions/runs/43248084930) 因 TC-PLATFORM-039 超时退队，同提交唯一一次对照重跑 attempt2 成功，超时根因未充分证明；后续实际队列 [43253272364](https://github.com/fasrun/fasrun/actions/runs/43253272364) 成功并合入。主干 [43253811493](https://github.com/fasrun/fasrun/actions/runs/43253811493) 的治理集成套件虽断言通过，仍因未处理 PostgreSQL 57P01 失败；清理竞态已真实 PG 复现；异常与错误输出脱敏修复 [#66](https://github.com/fasrun/fasrun/pull/66) 已提交，24 项治理专项及失败 mutation、替代全量 65/65 通过，尚待人工评审合入及主干核对。勾选仅记录代码实际合入，不覆盖此未解决问题。 |
 
-T006/T007 的任务合入依赖已满足；按本次执行安排，T005 集成异常处理并完成受影响验证后并行接续，本进度 PR #63 不构成额外开工前置。#63 原提交 837d64e 的 PR CI 43251538786 成功，队列 43253437830 因 CLI dist 产物缺失失败，公共构建修复按 #17 独立维护，不混入进度 PR。#17 的 Colima/Turbo 环境限制与 CLI dist 产物缺失分别保留；TC-PLATFORM-039 超时、治理 57P01 与 CLI 缺失分别记录，后续成功不覆盖首次失败。
+T006/T007 的任务合入依赖已满足；按本次执行安排，T005 修复及受影响验证完成后已从 main 2dbd35c 各建独立工作树并行接续，T006/T007 仍未交付、不勾选；本进度 PR #63 不构成额外开工前置。T007 的真实 CLI 归档授权接缝未列入允许修改路径，已按 [#67](https://github.com/fasrun/fasrun/issues/67) 回传推荐的最小规格修订，确认合入前不越界修改；其他已批准部分继续。#63 原提交 837d64e 的 PR CI 43251538786 成功，队列 43253437830 因 CLI dist 产物缺失失败，公共构建修复按 #17 独立维护为 SF-7 [#64](https://github.com/fasrun/fasrun/issues/64)/需求 [#65](https://github.com/fasrun/fasrun/pull/65)，不混入进度 PR。#17 的 Colima/Turbo 环境限制与 CLI dist 产物缺失分别保留；TC-PLATFORM-039 超时、治理 57P01 与 CLI 缺失分别记录，后续成功不覆盖首次失败。
 
 每任务独立分支 `feat/SF-5-T<nnn>-<简述>`、独立 PR，标题以 `SF-5 T<nnn>` 开头。依赖表示前置任务的 PR **已人工合入**，不能用本机完成、打开 PR 或仅获批准替代。`[P]` 表示依赖满足即可与其他就绪任务并行，不等编号前一项，也不等整批评审。下列范围是最大允许范围，具体交付边界见同页细则；不能借目录范围修改无关功能。
 
