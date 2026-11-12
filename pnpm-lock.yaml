@@ -688,6 +688,9 @@ importers:
       '@types/node':
         specifier: 24.19.2
         version: 24.19.2
+      '@vitest/coverage-v8':
+        specifier: 4.1.12
+        version: 4.1.12(vitest@4.1.12)
       tsdown:
         specifier: 0.23.5
         version: 0.23.5(typescript@6.0.3)
