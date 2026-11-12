@@ -10,7 +10,26 @@ node apps/fasrun-dev-cli/bin/run.js spec validate fasrun/
 node apps/fasrun-dev-cli/bin/run.js check
 ```
 
-安装命令行后可使用 `fasrun` 或 `fas`。`spec validate [目录]` 默认检查当前目录下的 `fasrun/`；`check` 读取 `fasrun.yaml` 的规格根目录，先运行规格自检，再依次检查 `Fasfile` 与 `fasrun.yaml` 的最小 schema。任一步失败即停止。schema 沿用 R-platform-017：版本必须为 1，拒绝未知顶层字段，`fasrun.yaml.spec_root` 必须为字符串；完整 schema 留给 M1。
+安装命令行后可使用 `fasrun` 或 `fas`。`spec validate [目录]` 默认检查当前目录下的 `fasrun/`；`check` 先拒绝非法的 `spec_root`，再运行规格自检，随后依次检查 `Fasfile` 与 `fasrun.yaml`。CLI、init 模板与仓库 CI 共享 spec-common 的完整 version: 1 Zod schema，错误标出同一文件与字段路径；拒绝嵌套未知字段、错误类型和版本。
+
+仓库路径必须使用规范相对路径，不允许绝对路径、父目录、反斜线或重复斜线；`protected_paths`、`high_risk_paths` 和评审规则 `paths` 支持受限 glob：段内 `*`、完整段 `**`，不支持 `?`、括号、花括号或否定。目录可保留尾部 `/`。`spec_root` 和 `shared_files` 不允许 glob。
+
+Fasfile 保留 principles、stack、quality_gates、protected_paths、high_risk_paths、agent；stack 的技术名可扩展，其他对象严格拒绝未知字段。评审声明如下（示例，不代表本仓已批准的规则）：
+
+```yaml
+review_rules:
+  - id: security
+    paths: [src/auth/]
+    domains: [security]
+    checks: [security-review]
+prior_confirmations:
+  - id: architecture
+    domains: [architecture]
+    reviewer_member_ids: [member-id]
+    layers: [requirements, design]
+```
+
+各列表内 id 唯一；评审规则至少有一个路径或领域并声明 checks；事前确认必须有非空领域、成员及 layers，层只能为 requirements/design。旧配置缺省新列表为空，init 给出注释示例与空列表，不虚构确认人。这里验证形状；成员存在、组织约束只能收紧及固定提交的语义由项目上下文检查负责，解析声明不代表已实现 M2 AI 代码评审。
 
 ## 文件与编号
 

@@ -1,5 +1,5 @@
 // Repository config and naming checks (SF-2).
-// TC-PLATFORM-051 — R-platform-017.S1: the repository's fasrun.yaml and Fasfile pass the minimal schema.
+// TC-PLATFORM-051 — R-platform-017.S1: the repository's fasrun.yaml and Fasfile pass the complete schema.
 // TC-PLATFORM-052 — R-platform-017.S2: unknown top-level keys and a wrong version are rejected.
 // TC-PLATFORM-053 — R-platform-017.S3: fasrun.local.yaml is ignored by git.
 // TC-PLATFORM-054 — R-platform-018.S1: no old names from the residue check configuration remain.
@@ -22,11 +22,16 @@ const ENTITY_SENTENCE =
   '帆驭 (Fasrun) 是一套 Spec 驱动的面向软件交付团队的 AI Agent 控制平面与运行时基础设施。它通过 Fasfile 将企业治理公理与安全约束（Guardrails）代码化，为自主 Agent 提供确定性执行保障。';
 
 describe('repository config (R-platform-017)', () => {
-  it('TC-PLATFORM-051 fasrun.yaml and Fasfile pass the minimal schema', () => {
+  it('TC-PLATFORM-051 fasrun.yaml and Fasfile pass the complete schema', () => {
     expect(validateRepoConfig('fasrun.yaml', read('fasrun.yaml'))).toEqual([]);
     expect(validateRepoConfig('Fasfile', read('Fasfile'))).toEqual([]);
     expect((parse(read('fasrun.yaml')) as { spec_root: string }).spec_root).toBe('fasrun/');
-    const fasfile = parse(read('Fasfile')) as { high_risk_paths: string[]; stack: Record<string, string> };
+    const fasfile = parse(read('Fasfile')) as {
+      high_risk_paths: string[];
+      stack: Record<string, string>;
+      quality_gates: { coverage: { application_lines: number; security_branches: number } };
+    };
+    expect(fasfile.quality_gates.coverage).toEqual({ application_lines: 80, security_branches: 90 });
     expect(fasfile.high_risk_paths).toEqual(expect.arrayContaining(['.github/', 'fasrun/specs/']));
     expect(fasfile.stack).toMatchObject({
       node: '24',
@@ -44,6 +49,26 @@ describe('repository config (R-platform-017)', () => {
     expect(validateRepoConfig('Fasfile', 'version: 2\n')).toEqual(['Fasfile: version must be 1, got 2']);
     expect(validateRepoConfig('fasrun.yaml', 'version: 1\n')).toEqual(['fasrun.yaml: spec_root must be a string']);
     expect(validateRepoConfig('Fasfile', '- not a mapping\n')).toEqual(['Fasfile: the top level must be a mapping']);
+  });
+
+  it('TC-PLATFORM-052 rejects nested unknown fields, types and escaping paths', () => {
+    for (const text of [
+      'version: 1\nquality_gates: {coverage: {unknown: 90}}',
+      'version: 1\nstack: {node: 24}',
+      'version: 1\nprotected_paths: [../secret]',
+    ]) {
+      expect(validateRepoConfig('Fasfile', text).length).toBeGreaterThan(0);
+    }
+  });
+
+  it('TC-SF5-PLATFORM-001 CI preserves valid declarations and locates missing confirmation fields', () => {
+    const valid =
+      'version: 1\nreview_rules: [{id: security, paths: [src/], checks: [review]}]\nprior_confirmations: [{id: security, domains: [security], reviewer_member_ids: [member-id], layers: [requirements]}]';
+    expect(validateRepoConfig('Fasfile', valid)).toEqual([]);
+    for (const field of ['domains', 'reviewer_member_ids']) {
+      const invalid = valid.replace(new RegExp(`${field}: \\[[^\\]]+\\], `), '');
+      expect(validateRepoConfig('Fasfile', invalid).join('\n')).toContain(`prior_confirmations.0.${field}`);
+    }
   });
 
   it('TC-PLATFORM-053 fasrun.local.yaml is ignored by git', () => {
