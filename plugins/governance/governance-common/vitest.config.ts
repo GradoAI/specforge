@@ -4,7 +4,7 @@ export default defineConfig({
     coverage: {
       enabled: true,
       provider: 'v8',
-      include: ['src/conditions/index.ts'],
+      include: ['src/conditions/index.ts', 'src/policy.ts'],
       reporter: ['text', 'json-summary'],
       thresholds: { branches: 90 },
     },

@@ -9,3 +9,9 @@ export {
   type MigrationPlugin,
   type MigrationReport,
 } from './migrate.js';
+export {
+  createEventForwarder,
+  type EventConsumer,
+  type EventForwarder,
+  type EventForwarderOptions,
+} from './events/index.js';
