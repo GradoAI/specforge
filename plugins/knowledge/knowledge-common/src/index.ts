@@ -7,3 +7,6 @@ export interface KnowledgeStatus {
   status: 'ok';
 }
 export * from './control-plane.js';
+export * from './constraints.js';
+export * from './project.js';
+export * from './paths.js';
