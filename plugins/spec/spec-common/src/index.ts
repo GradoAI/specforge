@@ -9,3 +9,5 @@ export interface SpecStatus {
 
 export * from './validation.js';
 export * from './archive.js';
+
+export * from './config/index.js';

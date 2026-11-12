@@ -1,6 +1,6 @@
-import { readdir, readFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
-import { validateSpecs, type SpecFiles } from '@fasrun/plugin-spec-common';
+import { readdir, readFile, realpath } from 'node:fs/promises';
+import { isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { repositoryPathSchema, validateSpecs, type SpecFiles } from '@fasrun/plugin-spec-common';
 import { parse } from 'yaml';
 import { CliError, CliErrorCodes } from '../errors.js';
 import { validateRepoConfig } from './repo-config.js';
@@ -93,7 +93,24 @@ export async function runCheck(directory: string): Promise<{ checks: string[] }>
     config && typeof config === 'object' && 'spec_root' in config && typeof config.spec_root === 'string'
       ? config.spec_root
       : 'fasrun/';
-  await runSpecValidate(resolve(directory, specRoot));
+  // Never traverse outside the repository before the full config check.
+  if (!repositoryPathSchema.safeParse(specRoot).success)
+    throw new CliError(
+      CliErrorCodes.CHECK_FAILED,
+      'fasrun.yaml: spec_root: must be a canonical repository-relative path',
+    );
+  let repository: string;
+  let target: string;
+  try {
+    repository = await realpath(directory);
+    target = await realpath(resolve(directory, specRoot));
+  } catch (error) {
+    throw new CliError(CliErrorCodes.CONFIG_INVALID, `fasrun.yaml: spec_root: ${(error as Error).message}`);
+  }
+  const location = relative(repository, target);
+  if (location === '..' || location.startsWith(`..${sep}`) || isAbsolute(location))
+    throw new CliError(CliErrorCodes.CHECK_FAILED, 'fasrun.yaml: spec_root: resolved path escapes the repository');
+  await runSpecValidate(target);
   const fasfile = await readRequired(join(directory, 'Fasfile'));
   const errors = [...validateRepoConfig('Fasfile', fasfile), ...validateRepoConfig('fasrun.yaml', yaml)];
   if (errors.length) throw new CliError(CliErrorCodes.CHECK_FAILED, errors.join('\n'));
