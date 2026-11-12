@@ -18,14 +18,6 @@ export class SpecArchive extends BaseCommand {
   }
 }
 
-export class Migrate extends BaseCommand {
-  static override summary = 'Run the database migrations of every plugin';
-  async run(): Promise<never> {
-    await this.parse(Migrate);
-    return notImplemented('migrate', 'T012');
-  }
-}
-
 export class Seed extends BaseCommand {
   static override summary = 'Load the example dataset';
   async run(): Promise<never> {

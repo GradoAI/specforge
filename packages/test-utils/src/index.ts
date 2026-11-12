@@ -9,3 +9,4 @@ export {
   type TestPostgres,
 } from './postgres.js';
 export { startTestBackend, type StartTestBackendOptions, type TestBackend } from './test-backend.js';
+export { exampleBaseData, EXAMPLE_BASE_DATA_SQL, writeMigrationFixture } from './migration-fixture.js';

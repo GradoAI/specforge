@@ -2,3 +2,10 @@ export { createBackend, type Backend, type CreateBackendOptions } from './backen
 export { runBackend } from './run.js';
 export { createRootConfig, wrapPino } from './services.js';
 export { idCheck, organizationDatabase, type OrganizationTransaction } from './database.js';
+export {
+  migrateDatabase,
+  MIGRATION_LOCK_KEY,
+  type BaseDataDefinition,
+  type MigrationPlugin,
+  type MigrationReport,
+} from './migrate.js';
