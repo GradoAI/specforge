@@ -12,7 +12,7 @@ node apps/fasrun-dev-cli/bin/run.js check
 
 安装命令行后可使用 `fasrun` 或 `fas`。`spec validate [目录]` 默认检查当前目录下的 `fasrun/`；`check` 先拒绝非法的 `spec_root`，再运行规格自检，随后依次检查 `Fasfile` 与 `fasrun.yaml`。CLI、init 模板与仓库 CI 共享 spec-common 的完整 version: 1 Zod schema，错误标出同一文件与字段路径；拒绝嵌套未知字段、错误类型和版本。
 
-仓库路径必须使用规范相对路径，不允许绝对路径、父目录、反斜线或重复斜线；`protected_paths`、`high_risk_paths` 和评审规则 `paths` 支持受限 glob：段内 `*`、完整段 `**`，不支持 `?`、括号、花括号或否定。目录可保留尾部 `/`。`spec_root` 和 `shared_files` 不允许 glob。
+仓库路径必须使用规范相对路径，不允许绝对路径、父目录、反斜线或重复斜线；`protected_paths`、`high_risk_paths` 和评审规则 `paths` 支持受限 glob：段内 `*`、完整段 `**`，不支持 `?`、括号、花括号或否定。目录可保留尾部 `/`。`spec_root` 和 `shared_files` 不允许 glob。`check` 还解析规格根目录及中间目录的 symlink，拒绝指向仓库外的目标；用户显式调用 `spec validate <目录>` 仍可检查外部目录。
 
 Fasfile 保留 principles、stack、quality_gates、protected_paths、high_risk_paths、agent；stack 的技术名可扩展，其他对象严格拒绝未知字段。评审声明如下（示例，不代表本仓已批准的规则）：
 
