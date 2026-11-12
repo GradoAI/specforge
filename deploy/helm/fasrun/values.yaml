@@ -1,0 +1,21 @@
+# Supply immutable image references emitted by deploy/docker/build.mjs.
+images:
+  core: fasrun-core-svc:unconfigured
+  connect: fasrun-connect-svc:unconfigured
+  portal: fasrun-portal-web:unconfigured
+  cli: fasrun-dev-cli:unconfigured
+imagePullPolicy: IfNotPresent
+database:
+  ownerSecret: fasrun-owner
+  appSecret: fasrun-app
+migration:
+  activeDeadlineSeconds: 300
+# Reserved for later approved tasks; no resources are rendered for these keys.
+keycloak:
+  enabled: false
+observability:
+  enabled: false
+tokenHub:
+  enabled: false
+backup:
+  enabled: false
