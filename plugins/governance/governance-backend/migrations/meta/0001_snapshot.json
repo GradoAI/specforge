@@ -1,0 +1,930 @@
+{
+  "id": "b54b9ff8-2a76-4057-91ec-0887c0db76c9",
+  "prevId": "2f573968-06bd-4e66-82ae-c8ad33baea19",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "governance.audit_event": {
+      "name": "audit_event",
+      "schema": "governance",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "event_id": {
+          "name": "event_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sequence": {
+          "name": "sequence",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "previous_hash": {
+          "name": "previous_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hash": {
+          "name": "hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event": {
+          "name": "event",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ix_audit_event_org_event": {
+          "name": "ix_audit_event_org_event",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "ix_audit_event_org_sequence": {
+          "name": "ix_audit_event_org_sequence",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "sequence",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "ix_audit_event_org_created_id": {
+          "name": "ix_audit_event_org_created_id",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_audit_event": {
+          "name": "pk_audit_event",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "audit_event_org_isolation": {
+          "name": "audit_event_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"governance\".\"audit_event\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"governance\".\"audit_event\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_audit_event_id": {
+          "name": "ck_audit_event_id",
+          "value": "\"governance\".\"audit_event\".\"id\" ~ '^aud_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_audit_event_org": {
+          "name": "ck_audit_event_org",
+          "value": "\"governance\".\"audit_event\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_audit_event_version": {
+          "name": "ck_audit_event_version",
+          "value": "\"governance\".\"audit_event\".\"version\" > 0"
+        },
+        "ck_audit_event_sequence": {
+          "name": "ck_audit_event_sequence",
+          "value": "\"governance\".\"audit_event\".\"sequence\" > 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "governance.budget_constraint": {
+      "name": "budget_constraint",
+      "schema": "governance",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "policy_id": {
+          "name": "policy_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scope_id": {
+          "name": "scope_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "snapshot": {
+          "name": "snapshot",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ix_budget_constraint_org_created_id": {
+          "name": "ix_budget_constraint_org_created_id",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_budget_constraint": {
+          "name": "pk_budget_constraint",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "budget_constraint_org_isolation": {
+          "name": "budget_constraint_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"governance\".\"budget_constraint\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"governance\".\"budget_constraint\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_budget_constraint_id": {
+          "name": "ck_budget_constraint_id",
+          "value": "\"governance\".\"budget_constraint\".\"id\" ~ '^bdg_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_budget_constraint_org": {
+          "name": "ck_budget_constraint_org",
+          "value": "\"governance\".\"budget_constraint\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_budget_constraint_version": {
+          "name": "ck_budget_constraint_version",
+          "value": "\"governance\".\"budget_constraint\".\"version\" > 0"
+        },
+        "ck_budget_constraint_scope": {
+          "name": "ck_budget_constraint_scope",
+          "value": "\"governance\".\"budget_constraint\".\"scope\" in ('organization','team','project','member')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "governance.chain_checkpoint": {
+      "name": "chain_checkpoint",
+      "schema": "governance",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "sequence": {
+          "name": "sequence",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hash": {
+          "name": "hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ix_chain_checkpoint_org_sequence": {
+          "name": "ix_chain_checkpoint_org_sequence",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "sequence",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "ix_chain_checkpoint_org_created_id": {
+          "name": "ix_chain_checkpoint_org_created_id",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_chain_checkpoint": {
+          "name": "pk_chain_checkpoint",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "chain_checkpoint_org_isolation": {
+          "name": "chain_checkpoint_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"governance\".\"chain_checkpoint\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"governance\".\"chain_checkpoint\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_chain_checkpoint_id": {
+          "name": "ck_chain_checkpoint_id",
+          "value": "\"governance\".\"chain_checkpoint\".\"id\" ~ '^chk_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_chain_checkpoint_org": {
+          "name": "ck_chain_checkpoint_org",
+          "value": "\"governance\".\"chain_checkpoint\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_chain_checkpoint_version": {
+          "name": "ck_chain_checkpoint_version",
+          "value": "\"governance\".\"chain_checkpoint\".\"version\" > 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "governance.consumer_receipt": {
+      "name": "consumer_receipt",
+      "schema": "governance",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "event_id": {
+          "name": "event_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ix_consumer_receipt_org_event": {
+          "name": "ix_consumer_receipt_org_event",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "ix_consumer_receipt_org_created_id": {
+          "name": "ix_consumer_receipt_org_created_id",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_consumer_receipt": {
+          "name": "pk_consumer_receipt",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "consumer_receipt_org_isolation": {
+          "name": "consumer_receipt_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"governance\".\"consumer_receipt\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"governance\".\"consumer_receipt\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_consumer_receipt_id": {
+          "name": "ck_consumer_receipt_id",
+          "value": "\"governance\".\"consumer_receipt\".\"id\" ~ '^rcp_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_consumer_receipt_org": {
+          "name": "ck_consumer_receipt_org",
+          "value": "\"governance\".\"consumer_receipt\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_consumer_receipt_version": {
+          "name": "ck_consumer_receipt_version",
+          "value": "\"governance\".\"consumer_receipt\".\"version\" > 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "governance.outbox": {
+      "name": "outbox",
+      "schema": "governance",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "event_id": {
+          "name": "event_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event": {
+          "name": "event",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "lease_token": {
+          "name": "lease_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lease_until": {
+          "name": "lease_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retry_at": {
+          "name": "retry_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {
+        "ix_outbox_org_event": {
+          "name": "ix_outbox_org_event",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "ix_outbox_org_created_id": {
+          "name": "ix_outbox_org_created_id",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_outbox": {
+          "name": "pk_outbox",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "outbox_org_isolation": {
+          "name": "outbox_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"governance\".\"outbox\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"governance\".\"outbox\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_outbox_id": {
+          "name": "ck_outbox_id",
+          "value": "\"governance\".\"outbox\".\"id\" ~ '^evt_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_outbox_org": {
+          "name": "ck_outbox_org",
+          "value": "\"governance\".\"outbox\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_outbox_version": {
+          "name": "ck_outbox_version",
+          "value": "\"governance\".\"outbox\".\"version\" > 0"
+        },
+        "ck_outbox_state": {
+          "name": "ck_outbox_state",
+          "value": "\"governance\".\"outbox\".\"state\" in ('pending','leased','delivered')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "governance.policy_version": {
+      "name": "policy_version",
+      "schema": "governance",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "policy_version": {
+          "name": "policy_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "snapshot": {
+          "name": "snapshot",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ix_policy_version_org_version": {
+          "name": "ix_policy_version_org_version",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "policy_version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "ix_policy_version_org_created_id": {
+          "name": "ix_policy_version_org_created_id",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_policy_version": {
+          "name": "pk_policy_version",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "policy_version_org_isolation": {
+          "name": "policy_version_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"governance\".\"policy_version\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"governance\".\"policy_version\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_policy_version_id": {
+          "name": "ck_policy_version_id",
+          "value": "\"governance\".\"policy_version\".\"id\" ~ '^pol_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_policy_version_org": {
+          "name": "ck_policy_version_org",
+          "value": "\"governance\".\"policy_version\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_policy_version_version": {
+          "name": "ck_policy_version_version",
+          "value": "\"governance\".\"policy_version\".\"version\" > 0"
+        }
+      },
+      "isRLSEnabled": true
+    }
+  },
+  "enums": {},
+  "schemas": {
+    "governance": "governance"
+  },
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

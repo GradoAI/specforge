@@ -691,12 +691,30 @@ importers:
 
   plugins/governance/governance-backend:
     dependencies:
+      '@fasrun/backend-defaults':
+        specifier: workspace:*
+        version: link:../../../packages/backend-defaults
       '@fasrun/backend-plugin-api':
         specifier: workspace:*
         version: link:../../../packages/backend-plugin-api
+      '@fasrun/contracts-core':
+        specifier: workspace:*
+        version: link:../../../packages/contracts-core
+      '@fasrun/plugin-governance-common':
+        specifier: workspace:*
+        version: link:../governance-common
+      '@fasrun/plugin-governance-node':
+        specifier: workspace:*
+        version: link:../governance-node
       drizzle-orm:
         specifier: 0.45.4
         version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@fasrun/test-utils':
         specifier: workspace:*
@@ -704,6 +722,12 @@ importers:
       '@types/node':
         specifier: 24.19.2
         version: 24.19.2
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      '@vitest/coverage-v8':
+        specifier: 4.1.12
+        version: 4.1.12(vitest@4.1.12)
       tsdown:
         specifier: 0.23.5
         version: 0.23.5(typescript@6.0.3)
