@@ -21,8 +21,9 @@ export async function migrationPlugins(root: string): Promise<MigrationPlugin[]>
   }
   return Promise.all(
     [...names].sort().map(async (name) => {
-      const schema = name.slice('@fasrun/plugin-'.length, -'-backend'.length);
-      const migrationsDirectory = join(root, 'plugins', schema, `${schema}-backend`, 'migrations');
+      const plugin = name.slice('@fasrun/plugin-'.length, -'-backend'.length);
+      const schema = plugin.replaceAll('-', '_');
+      const migrationsDirectory = join(root, 'plugins', plugin, `${plugin}-backend`, 'migrations');
       let baseData: BaseDataDefinition[] = [];
       try {
         baseData = JSON.parse(
