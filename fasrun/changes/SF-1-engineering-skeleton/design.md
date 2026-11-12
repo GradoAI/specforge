@@ -114,8 +114,8 @@
 对应需求：R-platform-009
 做法：`tools/migration-check`，作为 CI 作业与本地命令运行，三步都执行，汇总后再决定退出码。
 1. squawk 检查所有迁移 SQL；规则配置在 `.squawk.toml`，被排除的规则写明理由。
-2. 用 Testcontainers 启动空的 PostgreSQL，执行 `fasrun migrate`；再用 drizzle-kit 计算 Drizzle 表定义与该数据库之间的差异，差异非空即失败，并列出表与列（具体命令以 drizzle-kit 当前版本的文档为准）。
-3. 规范检查：查询 `pg_catalog`，对各插件 schema 中的表逐条检查：
+2. 用 Testcontainers 启动空的 PostgreSQL，执行 `fasrun migrate`；再用 drizzle-kit 计算业务 Drizzle 表定义与该数据库业务表之间的差异（仅将下述两张执行器内部表分离至独立检查），差异非空即失败，并列出表与列（具体命令以 drizzle-kit 当前版本的文档为准）。
+3. 规范检查：查询 `pg_catalog`，对各插件 schema 中的业务表逐条检查：
    - 约束与索引的命名前缀；
    - 标准列与类型（timestamptz、不用 varchar(n)、不用浮点类型）；
    - id 的前缀检查约束；
@@ -123,6 +123,11 @@
    - 表与每列都有 COMMENT。
 
    只追加表、平台级表的例外，由表定义旁导出的元数据声明：只追加表没有 updated_at 与 version；平台级表没有 org_id，不检查行级安全与策略。每个问题指明表名，并按「创建该表的迁移文件」定位到文件。
+- 执行器内部表按插件清单中的 schema 与准确表名限定为 `schema_migration`、`base_data_sync`，独立检查，不免检：
+  - `schema_migration` 必须恰有 `filename text NOT NULL`、`hash text NOT NULL`、`executed_at timestamptz NOT NULL`，主键恰为 `filename`；
+  - `base_data_sync` 必须恰有 `key text NOT NULL`、`version bigint NOT NULL`、`synced_at timestamptz NOT NULL`，主键恰为 `key`；
+  - 两表必须存在、owner 为 `fasrun_owner`，`fasrun_app` 无实际表访问权限（包括经 PUBLIC 或角色继承取得的权限）；严格核对 PostgreSQL 类型，不把域或其他近似类型当成规定类型；
+  - 不要求两表提供业务 Drizzle 定义或 D-7 业务列、注释、RLS；其他实际表仍完整参加差异与规范检查，不允许前缀、通配符或其他宽泛命名豁免；内部表诊断定位表与执行器定义 `packages/backend-defaults/src/migrate.ts`。
 - 违例样例只放在检查工具自己的测试夹具中。
 
 ### D-10 fasrun 命令行
@@ -267,6 +272,7 @@
 做法：
 - 每个镜像一个 Dockerfile，放在 `deploy/docker/`：fasrun-core-svc、fasrun-connect-svc、fasrun-portal-web，以及 fasrun-dev-cli（供迁移任务使用）。
 - 多阶段构建：构建阶段 `node:24-bookworm-slim`，执行 `pnpm install --frozen-lockfile`、构建，再用 `pnpm deploy` 导出生产依赖；运行阶段使用 distroless 的 Node.js 24 非 root 镜像（uid 65532）。
+- TC-PLATFORM-041 在最终 distroless 镜像内通过 Node 的 `process.getuid()` 验证实际 UID 为 65532，并核对镜像配置的非 root 用户；不向生产镜像添加 `id` 工具、不用 debug 镜像或仅 Config.User 代替实际运行身份验证（澄清 #41）。
 - 镜像标签为构建内容的哈希，内容不变则标签不变。
 
 ### D-18 Helm 部署与 k3d 一键脚本

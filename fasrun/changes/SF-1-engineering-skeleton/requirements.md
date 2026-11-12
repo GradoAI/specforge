@@ -67,4 +67,7 @@
 
 - [#35](https://github.com/fasrun/fasrun/issues/35)（2026-11-12，Human 在工作会话确认，由 agent [转述记录](https://github.com/fasrun/fasrun/issues/35#issuecomment-6814982064)，不代表 GitHub 人工评审已批准）：采用独立、受版本控制的夹具验证脚手架输出；九个真实插件允许按已批准任务演进，保留宿主注册检查及现有构建、代码检查和测试门槛。相应修订 R-platform-006、D-6 与 T011；修订合入后再实现 T011。
 
+- [#41](https://github.com/fasrun/fasrun/issues/41)（2026-11-12，Human 在工作会话确认，由 agent [转述记录](https://github.com/fasrun/fasrun/issues/41#issuecomment-6819506987)，不代表 GitHub 人工评审已批准）：保留最终 distroless 镜像及 UID 65532，以镜像内 Node 的 `process.getuid()` 验证实际运行身份。对应 R-platform-013.S1 → D-17 → T018 → TC-PLATFORM-041；仅修正验收方式，修订人工合入后交付代码。
+- [#42](https://github.com/fasrun/fasrun/issues/42)（2026-11-12，Human 在工作会话确认，由 agent [转述记录](https://github.com/fasrun/fasrun/issues/42#issuecomment-6819508243)，不代表 GitHub 人工评审已批准）：两张明确的迁移执行器内部表与业务表分别检查，不免检、不扩大豁免；独立核对存在、字段与严格类型、主键、owner 与应用角色拒绝访问。对应 R-platform-009.S4/S5 → D-9 → T013 → TC-PLATFORM-031/068；保留既有业务检查，修订人工合入后交付代码。
+
 ## 待澄清
