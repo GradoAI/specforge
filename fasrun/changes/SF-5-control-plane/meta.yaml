@@ -1,0 +1,8 @@
+work: SF-5
+title: M1 控制平面核心
+issue: https://github.com/fasrun/fasrun/issues/50
+size: large
+template_version: 1
+layers:
+  requirements:
+    status: in_review
