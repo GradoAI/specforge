@@ -1,5 +1,5 @@
 {
-  "name": "fasrun-migration-check-runtime",
+  "name": "@fasrun/migration-check-runtime",
   "private": true,
   "license": "AGPL-3.0-only",
   "dependencies": {
