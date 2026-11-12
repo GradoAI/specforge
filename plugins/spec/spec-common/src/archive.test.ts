@@ -40,6 +40,17 @@ describe('archive plan D-13', () => {
       expect(files).toEqual(before);
     }
   });
+  it('TC-SPEC-014 rejects auxiliary sections without discarding their content', () => {
+    for (const heading of ['# Notes', '## Notes', '### Additional explanation']) {
+      const files = archiveFixture();
+      files['specs/demo/spec.md'] += `\n${heading}\nImportant content retained on failure.\n`;
+      const before = structuredClone(files);
+      expect(() => planSpecArchive(files, [], 'changes/demo', '2026-11-12')).toThrow(
+        'Unsupported current spec heading',
+      );
+      expect(files).toEqual(before);
+    }
+  });
   it('TC-SPEC-014 checks date, active source, existing targets and merged validation', () => {
     for (const date of ['today', '2026-02-30', '2026-99-01'])
       expect(() => planSpecArchive(archiveFixture(), [], 'changes/demo', date)).toThrow();
@@ -53,6 +64,11 @@ describe('archive plan D-13', () => {
         '2026-11-12',
       ),
     ).toThrow('exists');
+    for (const text of [`# Demo\n${entry(1)}## Requirements\n`, '# Demo\n## Requirements\n## Requirements\n']) {
+      expect(() =>
+        planSpecArchive({ ...archiveFixture(), 'specs/demo/spec.md': text }, [], 'changes/demo', '2026-11-12'),
+      ).toThrow();
+    }
     const missing = archiveFixture();
     delete (missing as Record<string, string>)['specs/demo/spec.md'];
     expect(() => planSpecArchive(missing, [], 'changes/demo', '2026-11-12')).toThrow();
