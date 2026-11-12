@@ -1,15 +1,27 @@
 # 任务：SF-5 M1 控制平面核心
 
-需求 #52 已合入 fbe9d6d，设计 #56 已合入 8014163；本任务层基于 main `8014163082f113c62971a7c21807b8e9f16b72cf`。仅提交任务规格，全部任务待实现，任务层须经 zjh1978 评审并合入后才开工。已批准的需求、设计及 #51 确认原文不修改；历史文件中的“本层待评审”是当时记录，当前层状态见 meta 与 #50。
+初始提交背景：需求 #52 已合入 fbe9d6d、设计 #56 已合入 8014163 后，本任务层以 main `8014163082f113c62971a7c21807b8e9f16b72cf` 为基线提交；当时只提交规格，全部任务待实现。该背景不代表当前执行阶段。已批准的需求、设计及 #51 确认原文不修改。
+
+当前执行阶段（2026-11-12 合入对账）：任务层 [#57](https://github.com/fasrun/fasrun/pull/57) 已合入 f542ebd，zjh1978 对任务提交 1e5284f 的 [APPROVED](https://github.com/fasrun/fasrun/pull/57#pullrequestreview-5875098938) 已核验，实施阶段已开始。main 为 bd0e91a；T001–T004 已实际合入，T005 尚未合入。层状态同步于 meta.yaml，执行进度以本页及关联 PR 的实际合入事实对账，#50 为工作入口。
+
+| 任务 | 已核验的交付与当前状态 |
+| --- | --- |
+| T001 | [#60](https://github.com/fasrun/fasrun/pull/60) 已合入 bd0e91a；REBASE 队列 [43240001589](https://github.com/fasrun/fasrun/actions/runs/43240001589) 成功。主干 [43240659102](https://github.com/fasrun/fasrun/actions/runs/43240659102) 首轮 TC-PLATFORM-039 超时，第二次成功；保留首轮失败，不宣称根因已修复。 |
+| T002 | [#58](https://github.com/fasrun/fasrun/pull/58) 已合入 9835a5f；队列 43229824791、主干 43230302298 成功。 |
+| T003 | [#59](https://github.com/fasrun/fasrun/pull/59) 已合入 c2db62d；队列 43229954481、主干 43230402387 成功。 |
+| T004 | [#61](https://github.com/fasrun/fasrun/pull/61) 已合入 49cfc3f；队列 43230306398、主干 43230808076 成功。 |
+| T005 | [#62](https://github.com/fasrun/fasrun/pull/62)，HEAD d0fe78f，当前已获人工批准但仍 OPEN、未合入且不在队列。PR CI 43246732150 成功；首次 merge_group [43248084930](https://github.com/fasrun/fasrun/actions/runs/43248084930) 因 TC-PLATFORM-039 超时退队；同队列提交的唯一一次对照重跑（attempt2）成功，超时根因尚未充分证明，当前等待人工重新入队。诊断证据见 #62。批准、旧队列重跑成功均不等于实际合入，保持未完成。 |
+
+T006/T007 的全部真实前置尚未满足；T005 人工合入并完成既有集成核对后，按本页依赖并行接续。#17 的 Colima/Turbo 环境限制与 CLI dist 产物缺失分别保留，本次队列测试超时单独记录。
 
 每任务独立分支 `feat/SF-5-T<nnn>-<简述>`、独立 PR，标题以 `SF-5 T<nnn>` 开头。依赖表示前置任务的 PR **已人工合入**，不能用本机完成、打开 PR 或仅获批准替代。`[P]` 表示依赖满足即可与其他就绪任务并行，不等编号前一项，也不等整批评审。下列范围是最大允许范围，具体交付边界见同页细则；不能借目录范围修改无关功能。
 
 ## 任务清单
 
-- [ ] T001 [P] 共享契约与带上下文的服务扩展点 — 对应 R-identity-002、R-connect-001、R-entry-001、R-spec-010、D-1、D-8、D-15、D-19；修改范围 packages/contracts-core/、packages/backend-plugin-api/、plugins/identity/identity-common/、plugins/identity/identity-node/、plugins/connect/connect-common/、plugins/connect/connect-node/、plugins/orchestration/orchestration-common/、plugins/orchestration/orchestration-node/、plugins/spec/spec-common/、plugins/spec/spec-node/、plugins/entry/entry-common/、plugins/entry/entry-node/、plugins/governance/governance-common/、plugins/governance/governance-node/、plugins/knowledge/knowledge-common/、plugins/knowledge/knowledge-node/、plugins/environment/environment-common/、plugins/environment/environment-node/、.changeset/、pnpm-lock.yaml、tsconfig.json；用例 TC-SF5-CONTRACT-001
-- [ ] T002 [P] 完整配置schema、模板与CLI检查一致性 — 对应 R-platform-017、R-spec-007、R-spec-008、D-14、D-19；修改范围 plugins/spec/spec-common/src/config/、plugins/spec/spec-common/src/index.ts、plugins/spec/spec-common/package.json、plugins/spec/spec-common/test/fixtures/config/、apps/fasrun-dev-cli/src/commands/check.ts、apps/fasrun-dev-cli/src/commands/init.ts、apps/fasrun-dev-cli/src/lib/init.ts、apps/fasrun-dev-cli/src/lib/spec.ts、apps/fasrun-dev-cli/src/lib/repo-config.ts、apps/fasrun-dev-cli/src/config.test.ts、apps/fasrun-dev-cli/src/spec.test.ts、packages/cli-templates/、tools/scripts/src/repo-config.ts、tools/scripts/src/repo-config.test.ts、tools/scripts/package.json、tools/scripts/tsconfig.json、fasrun/README.md、.changeset/、pnpm-lock.yaml；用例 TC-PLATFORM-051、TC-PLATFORM-052、TC-PLATFORM-053、TC-SF5-PLATFORM-001
-- [ ] T003 [P] 条件目录与确定性规则求值 — 对应 R-governance-001、R-identity-002、D-3；修改范围 plugins/governance/governance-common/、.changeset/、pnpm-lock.yaml；用例 TC-SF5-GOVERNANCE-001
-- [ ] T004 [P] 控制平面回归夹具与真实运行时测试资源 — 对应 R-orchestration-001、R-spec-010、R-connect-002、D-17、D-19；修改范围 packages/test-utils/、.changeset/、pnpm-lock.yaml、tsconfig.json；用例 TC-SF5-FIXTURE-001
+- [x] T001 [P] 共享契约与带上下文的服务扩展点 — 对应 R-identity-002、R-connect-001、R-entry-001、R-spec-010、D-1、D-8、D-15、D-19；修改范围 packages/contracts-core/、packages/backend-plugin-api/、plugins/identity/identity-common/、plugins/identity/identity-node/、plugins/connect/connect-common/、plugins/connect/connect-node/、plugins/orchestration/orchestration-common/、plugins/orchestration/orchestration-node/、plugins/spec/spec-common/、plugins/spec/spec-node/、plugins/entry/entry-common/、plugins/entry/entry-node/、plugins/governance/governance-common/、plugins/governance/governance-node/、plugins/knowledge/knowledge-common/、plugins/knowledge/knowledge-node/、plugins/environment/environment-common/、plugins/environment/environment-node/、.changeset/、pnpm-lock.yaml、tsconfig.json；用例 TC-SF5-CONTRACT-001
+- [x] T002 [P] 完整配置schema、模板与CLI检查一致性 — 对应 R-platform-017、R-spec-007、R-spec-008、D-14、D-19；修改范围 plugins/spec/spec-common/src/config/、plugins/spec/spec-common/src/index.ts、plugins/spec/spec-common/package.json、plugins/spec/spec-common/test/fixtures/config/、apps/fasrun-dev-cli/src/commands/check.ts、apps/fasrun-dev-cli/src/commands/init.ts、apps/fasrun-dev-cli/src/lib/init.ts、apps/fasrun-dev-cli/src/lib/spec.ts、apps/fasrun-dev-cli/src/lib/repo-config.ts、apps/fasrun-dev-cli/src/config.test.ts、apps/fasrun-dev-cli/src/spec.test.ts、packages/cli-templates/、tools/scripts/src/repo-config.ts、tools/scripts/src/repo-config.test.ts、tools/scripts/package.json、tools/scripts/tsconfig.json、fasrun/README.md、.changeset/、pnpm-lock.yaml；用例 TC-PLATFORM-051、TC-PLATFORM-052、TC-PLATFORM-053、TC-SF5-PLATFORM-001
+- [x] T003 [P] 条件目录与确定性规则求值 — 对应 R-governance-001、R-identity-002、D-3；修改范围 plugins/governance/governance-common/、.changeset/、pnpm-lock.yaml；用例 TC-SF5-GOVERNANCE-001
+- [x] T004 [P] 控制平面回归夹具与真实运行时测试资源 — 对应 R-orchestration-001、R-spec-010、R-connect-002、D-17、D-19；修改范围 packages/test-utils/、.changeset/、pnpm-lock.yaml、tsconfig.json；用例 TC-SF5-FIXTURE-001
 - [ ] T005 [P] 治理策略、事务事件端口与只追加审计 — 对应 R-governance-002、R-identity-004、D-4、D-6、D-16；修改范围 plugins/governance/governance-backend/、plugins/governance/governance-common/、plugins/governance/governance-node/、packages/backend-defaults/src/events/、packages/backend-defaults/src/index.ts、packages/backend-defaults/package.json、packages/backend-defaults/tsconfig.json、.changeset/、pnpm-lock.yaml；用例 TC-SF5-GOVERNANCE-002、TC-SF5-IDENTITY-012、TC-SF5-IDENTITY-013；依赖 T001、T003、T004
 - [ ] T006 [P] Keycloak身份、权限矩阵与两层准入 — 对应 R-identity-001、R-identity-002、R-identity-003、D-2、D-3、D-16；修改范围 plugins/identity/identity-backend/、plugins/identity/identity-common/、plugins/identity/identity-node/、.changeset/、pnpm-lock.yaml；用例 TC-SF5-IDENTITY-001、TC-SF5-IDENTITY-002、TC-SF5-IDENTITY-003、TC-SF5-IDENTITY-004、TC-SF5-IDENTITY-005、TC-SF5-IDENTITY-006、TC-SF5-IDENTITY-007、TC-SF5-IDENTITY-008、TC-SF5-IDENTITY-009、TC-SF5-IDENTITY-010、TC-SF5-IDENTITY-011；依赖 T001、T003、T004、T005
 - [ ] T007 [P] 提交固定的项目上下文与最小流程目录 — 对应 R-spec-008、R-spec-007、R-governance-002、R-orchestration-010、D-7、D-14、D-16；修改范围 plugins/knowledge/knowledge-backend/、plugins/knowledge/knowledge-common/、plugins/knowledge/knowledge-node/、plugins/environment/environment-backend/、plugins/environment/environment-common/、plugins/environment/environment-node/、plugins/spec/spec-common/src/archive-authorization/、plugins/spec/spec-common/src/index.ts、.changeset/、pnpm-lock.yaml；用例 TC-SF5-SPEC-008、TC-SF5-SPEC-009；依赖 T001、T002、T003、T005
@@ -202,6 +214,7 @@
 - 验证记录分开：本机标准入口、显式Colima环境替代、PR CI、merge_group、主干、k3d完整集、专用真实接入。#17标准Colima限制仍未修复；CLI产物缺失是另一个构建/测试可靠性事项，不在D-19产品范围内顺手改Turbo。该故障影响CLI检查证据时，保留首次失败并单独按既有缺项流程复现/修订；复跑成功不是修复。不能删测试或将失败计入通过。
 - T006/T008等独立测试是真实领域组件加受控端口；T021是自动模拟回归，DBOS/Postgres仍真实；T022是真实k3d故障/排空；T024是真实Keycloak/GitHub阶段证据，仅agent允许已批准stub。测试桩标明版本及启用配置，M1不宣称真实自动起草，不读取开发者个人模型凭据，不提前建M2执行/M3页面/M4管理功能。
 - TC-CF-001–020全保留；快速集不杀进程，完整集补真实SIGKILL/等待恢复/排空，并记录每个TC的实际状态。禁止把第6轮19通过1跳过当本次成功，禁止将完整集尚未执行写为已验收。新增检查须记录实际名称与merge_group结果并回传PontusAI接入保护规则；agent不调整保护或批准/合并。
-- T001–T024各自PR人工合入后，才可将对应复选框回写完成并关联证据；可在后续规格进度PR或T025统一更新，不以此授权所有代码任务任意改规格文件。T025规格归档由PontusAI评审现行规格/需求归档，zjh1978核对交付；合入后再补main证据与#50最终状态，保留#17未解决部分。
+- T001–T024各自PR实际人工合入后，在每批任务合入对账时及时提交独立规格进度维护PR：勾选已合入任务、关联对应PR/合并提交及集成结果，更新当前执行阶段与相关层元数据；未合入任务保持未完成并注明当前PR状态。不再等到T025统一回写，也不能只更新#50、fasrun-design或REPORT。进度维护不改变任务定义、依赖、实现范围、需求或设计；超出这些维护内容仍走既有规格修订流程，不授权任意修改规格。任务层维护按既定分工由zjh1978评审，不新增开工审批；维护PR等待评审不阻塞已经满足真实依赖的实现任务。
+- T025负责汇总验收与规格归档，不替代日常合入进度对账。归档由PontusAI评审现行规格/需求归档，zjh1978核对交付；合入后再补main证据与#50最终状态，保留#17未解决部分。
 
 ## 待澄清
