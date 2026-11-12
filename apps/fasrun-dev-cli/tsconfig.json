@@ -2,18 +2,24 @@
   "extends": "../../tools/tsconfig/tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist/tsc",
-    "rootDir": "src",
+    "rootDir": ".",
     "emitDeclarationOnly": true,
     "types": ["node"],
     "customConditions": ["@fasrun/source"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "vitest.config.ts"],
   "references": [
     {
       "path": "../../packages/cli-templates"
     },
     {
       "path": "../../plugins/spec/spec-common"
+    },
+    {
+      "path": "../../packages/backend-defaults"
+    },
+    {
+      "path": "../../packages/test-utils"
     }
   ]
 }

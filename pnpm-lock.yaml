@@ -288,6 +288,9 @@ importers:
 
   apps/fasrun-dev-cli:
     dependencies:
+      '@fasrun/backend-defaults':
+        specifier: workspace:*
+        version: link:../../packages/backend-defaults
       '@fasrun/cli-templates':
         specifier: workspace:*
         version: link:../../packages/cli-templates
@@ -307,9 +310,18 @@ importers:
       '@fasrun/fasrun-portal-web':
         specifier: workspace:*
         version: link:../fasrun-portal-web
+      '@fasrun/test-utils':
+        specifier: workspace:*
+        version: link:../../packages/test-utils
       '@types/node':
         specifier: 24.19.2
         version: 24.19.2
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
       tsdown:
         specifier: 0.23.5
         version: 0.23.5(typescript@6.0.3)

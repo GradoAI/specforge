@@ -2,9 +2,10 @@
 // for problems found before a command runs.
 import { readFileSync } from 'node:fs';
 import { flush, run } from '@oclif/core';
+import Migrate from './commands/migrate.js';
 import Init from './commands/init.js';
 import Login from './commands/login.js';
-import { Migrate, Seed, SpecArchive } from './commands/placeholder.js';
+import { Seed, SpecArchive } from './commands/placeholder.js';
 import Check from './commands/check.js';
 import SpecValidate from './commands/spec-validate.js';
 import PluginNew from './commands/plugin-new.js';

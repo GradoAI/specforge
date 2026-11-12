@@ -248,10 +248,10 @@ describe('agent interface rules (R-platform-015)', () => {
   });
 
   it('exits with 5 and names the task for commands delivered later', async () => {
-    const run = await cli(['migrate', '--json']);
+    const run = await cli(['seed', '--json']);
     expect(run.code).toBe(5);
     expect(JSON.parse(run.stdout)).toMatchObject({
-      error: { code: 'FASRUN_NOT_IMPLEMENTED', message: expect.stringContaining('T012') as string },
+      error: { code: 'FASRUN_NOT_IMPLEMENTED', message: expect.stringContaining('T017') as string },
     });
   });
 });
