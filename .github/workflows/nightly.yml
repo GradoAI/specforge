@@ -24,8 +24,9 @@ jobs:
     timeout-minutes: 60
     env:
       FASRUN_BUILD_PLATFORM: linux/amd64
-      FASRUN_ARTIFACT_DIR: ${{ runner.temp }}/fasrun-nightly
     steps:
+      - name: Set evidence directory on the allocated runner
+        run: echo "FASRUN_ARTIFACT_DIR=$RUNNER_TEMP/fasrun-nightly" >> "$GITHUB_ENV"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
