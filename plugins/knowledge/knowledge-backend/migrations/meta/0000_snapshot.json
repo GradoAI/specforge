@@ -1,0 +1,542 @@
+{
+  "id": "e25c4c95-46a3-4783-a752-a33751d9ca32",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "knowledge.organization_rule": {
+      "name": "organization_rule",
+      "schema": "knowledge",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "definition_key": {
+          "name": "definition_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "definition_version": {
+          "name": "definition_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "snapshot": {
+          "name": "snapshot",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_customized": {
+          "name": "is_customized",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {
+        "ix_organization_rule_org_identity": {
+          "name": "ix_organization_rule_org_identity",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "definition_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "definition_version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_organization_rule": {
+          "name": "pk_organization_rule",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "organization_rule_org_isolation": {
+          "name": "organization_rule_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"knowledge\".\"organization_rule\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"knowledge\".\"organization_rule\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_organization_rule_id": {
+          "name": "ck_organization_rule_id",
+          "value": "\"knowledge\".\"organization_rule\".\"id\" ~ '^orl_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_organization_rule_org": {
+          "name": "ck_organization_rule_org",
+          "value": "\"knowledge\".\"organization_rule\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_organization_rule_version": {
+          "name": "ck_organization_rule_version",
+          "value": "\"knowledge\".\"organization_rule\".\"version\" > 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "knowledge.project_config_cache": {
+      "name": "project_config_cache",
+      "schema": "knowledge",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "repository_id": {
+          "name": "repository_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "base_commit": {
+          "name": "base_commit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "snapshot": {
+          "name": "snapshot",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ix_project_config_cache_org_identity": {
+          "name": "ix_project_config_cache_org_identity",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "repository_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "base_commit",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_project_config_cache": {
+          "name": "pk_project_config_cache",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "project_config_cache_org_isolation": {
+          "name": "project_config_cache_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"knowledge\".\"project_config_cache\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"knowledge\".\"project_config_cache\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_project_config_cache_id": {
+          "name": "ck_project_config_cache_id",
+          "value": "\"knowledge\".\"project_config_cache\".\"id\" ~ '^cfg_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_project_config_cache_org": {
+          "name": "ck_project_config_cache_org",
+          "value": "\"knowledge\".\"project_config_cache\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_project_config_cache_version": {
+          "name": "ck_project_config_cache_version",
+          "value": "\"knowledge\".\"project_config_cache\".\"version\" > 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "knowledge.spec_template": {
+      "name": "spec_template",
+      "schema": "knowledge",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "definition_key": {
+          "name": "definition_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "definition_version": {
+          "name": "definition_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "snapshot": {
+          "name": "snapshot",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_customized": {
+          "name": "is_customized",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {
+        "ix_spec_template_org_identity": {
+          "name": "ix_spec_template_org_identity",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "definition_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "definition_version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_spec_template": {
+          "name": "pk_spec_template",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "spec_template_org_isolation": {
+          "name": "spec_template_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"knowledge\".\"spec_template\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"knowledge\".\"spec_template\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_spec_template_id": {
+          "name": "ck_spec_template_id",
+          "value": "\"knowledge\".\"spec_template\".\"id\" ~ '^spt_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_spec_template_org": {
+          "name": "ck_spec_template_org",
+          "value": "\"knowledge\".\"spec_template\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_spec_template_version": {
+          "name": "ck_spec_template_version",
+          "value": "\"knowledge\".\"spec_template\".\"version\" > 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "knowledge.workflow_definition": {
+      "name": "workflow_definition",
+      "schema": "knowledge",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "definition_key": {
+          "name": "definition_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "definition_version": {
+          "name": "definition_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "snapshot": {
+          "name": "snapshot",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_customized": {
+          "name": "is_customized",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {
+        "ix_workflow_definition_org_identity": {
+          "name": "ix_workflow_definition_org_identity",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "definition_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "definition_version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_workflow_definition": {
+          "name": "pk_workflow_definition",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "workflow_definition_org_isolation": {
+          "name": "workflow_definition_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"knowledge\".\"workflow_definition\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"knowledge\".\"workflow_definition\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_workflow_definition_id": {
+          "name": "ck_workflow_definition_id",
+          "value": "\"knowledge\".\"workflow_definition\".\"id\" ~ '^wfd_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_workflow_definition_org": {
+          "name": "ck_workflow_definition_org",
+          "value": "\"knowledge\".\"workflow_definition\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_workflow_definition_version": {
+          "name": "ck_workflow_definition_version",
+          "value": "\"knowledge\".\"workflow_definition\".\"version\" > 0"
+        }
+      },
+      "isRLSEnabled": true
+    }
+  },
+  "enums": {},
+  "schemas": {
+    "knowledge": "knowledge"
+  },
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

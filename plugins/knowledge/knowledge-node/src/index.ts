@@ -1,8 +1,19 @@
 import { createServiceRef } from '@fasrun/backend-plugin-api';
 import type { OperationContext } from '@fasrun/contracts-core';
-import type { ProjectContext } from '@fasrun/plugin-knowledge-common';
+import type { ProjectContext, PinnedProject } from '@fasrun/plugin-knowledge-common';
 
+/** Bound by the host to identity's current-organization member read, never a caller-supplied roster. */
+export interface ProjectMembersPort {
+  resolveMembers(
+    context: OperationContext,
+    ids: readonly string[],
+  ): Promise<readonly { id: string; orgId: string; active: boolean }[]>;
+}
 export interface KnowledgeService {
+  readProject(
+    context: OperationContext,
+    request: { repositoryId: string; baseCommit: string; pin?: ProjectContext },
+  ): Promise<PinnedProject>;
   loadProjectContext(
     context: OperationContext,
     request: { repositoryId: string; baseCommit: string },

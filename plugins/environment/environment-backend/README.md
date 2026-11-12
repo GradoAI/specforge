@@ -1,0 +1,7 @@
+# Environment capability snapshots
+
+T007 implements only versioned environment templates and approved capability snapshots. `createEnvironmentServices` requires an application-role PostgreSQL pool, trusted current authorization and durable governance audit. The host must bind these ports to the real identity/governance services. Authorization receives the actual requested template ID/version and must validate its project/work association, regardless of the caller's original object label. Reads require exact template ID/version, persist access intent before storage, enforce tenant isolation, and recheck permission before return. Denials are audited; audit failures and provider errors fail closed without exposing provider details.
+
+Register `environmentBaseData(orgId, actorId)` with the existing owner-role migration runner for each explicitly provisioned tenant. The default template permits no command. New approved capabilities require a new immutable template version; callers cannot substitute capabilities in a knowledge project capture. There are no runtime nodes, instances, scheduling or execution APIs in this package.
+
+`TC-SF5-SPEC-008` verifies reads and denial/audit boundaries with controlled ports, plus real PostgreSQL migration, application-role RLS, immutable version lookup and repeated provisioning. It does not claim real node or agent execution. `pnpm --filter @fasrun/plugin-environment-backend test` runs unit and integration projects with coverage; direct `exec vitest run --project unit` isolates unit verification.
