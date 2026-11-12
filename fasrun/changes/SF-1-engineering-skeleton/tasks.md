@@ -1,6 +1,6 @@
 # 任务：SF-1 M0 工程骨架
 
-每个任务一个分支 `feat/SF-1-T<nnn>-<简述>`、一个代码 PR，PR 标题以「SF-1 T<nnn>」开头。用例编号由场景派生（TC-PLATFORM-<序号> 对应 platform 的场景，TC-SPEC-<序号> 对应 spec 的场景，按规格增量中的出现顺序编号），写在测试名中。
+每个任务一个分支 `feat/SF-1-T<nnn>-<简述>`、一个代码 PR，PR 标题以「SF-1 T<nnn>」开头。用例编号由场景派生（TC-PLATFORM-<序号> 对应 platform 的场景，TC-SPEC-<序号> 对应 spec 的场景，首次分配按规格增量中的出现顺序编号；后续新增场景使用未分配的新编号，既有场景与用例编号及对应关系不因插入场景而重排），写在测试名中。
 
 - [x] T001 单仓骨架与工具链 — 对应 R-platform-001、D-1；修改范围 package.json、pnpm-workspace.yaml、pnpm-lock.yaml、turbo.json、tsconfig.json、.npmrc、.nvmrc、.gitignore、.changeset/、tools/tsconfig/；用例 TC-PLATFORM-001（R-platform-001.S1）、TC-PLATFORM-002（R-platform-001.S2）
 - [x] T002 [P] 统一代码规范与依赖方向规则 — 对应 R-platform-002、D-2；依赖 T001；修改范围 tools/eslint-config/、tools/eslint-plugin-fasrun/、tools/prettier-config/、tools/commitlint-config/、eslint.config.js、prettier.config.js、commitlint.config.js、package.json；用例 TC-PLATFORM-003（R-platform-002.S1）、TC-PLATFORM-004（R-platform-002.S2）、TC-PLATFORM-005（R-platform-002.S3）、TC-PLATFORM-006（R-platform-002.S4）
