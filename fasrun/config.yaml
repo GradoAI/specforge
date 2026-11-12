@@ -1,0 +1,26 @@
+# SF-1 D-11: repository-relative directories and exact root files approved by the task layer.
+allowedPaths:
+  - apps/
+  - packages/
+  - plugins/
+  - tools/
+  - deploy/
+  - docs/
+  - fasrun/
+  - .github/
+  - .changeset/
+  - package.json
+  - pnpm-workspace.yaml
+  - pnpm-lock.yaml
+  - turbo.json
+  - tsconfig.json
+  - .npmrc
+  - .nvmrc
+  - .gitignore
+  - eslint.config.js
+  - prettier.config.js
+  - commitlint.config.js
+  - CLAUDE.md
+  - LICENSE
+  - CONTRIBUTING.md
+  - .squawk.toml
