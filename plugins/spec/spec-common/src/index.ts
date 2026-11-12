@@ -11,3 +11,4 @@ export * from './validation.js';
 export * from './archive.js';
 
 export * from './config/index.js';
+export * from './control-plane.js';

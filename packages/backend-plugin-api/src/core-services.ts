@@ -1,4 +1,4 @@
-import type { AuditContext } from '@fasrun/contracts-core';
+import type { AuditContext, ProtectedRead } from '@fasrun/contracts-core';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { FastifyPluginAsync } from 'fastify';
 import { createServiceRef } from './services.js';
@@ -53,7 +53,8 @@ export interface FileStorageService {
 }
 
 export interface DataRefService {
-  read(ref: string): Promise<unknown>;
+  /** Protected reads always require a validated actor, operation and labelled reference. */
+  read(request: ProtectedRead): Promise<unknown>;
 }
 
 export interface AuthService {

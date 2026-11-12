@@ -8,3 +8,4 @@ export interface GovernanceStatus {
 }
 
 export * from './conditions/index.js';
+export * from './control-plane.js';

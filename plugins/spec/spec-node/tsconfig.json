@@ -1,0 +1,22 @@
+{
+  "extends": "../../../tools/tsconfig/tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist/tsc",
+    "rootDir": "src",
+    "emitDeclarationOnly": true,
+    "types": ["node"],
+    "customConditions": ["@fasrun/source"]
+  },
+  "include": ["src/**/*.ts"],
+  "references": [
+    {
+      "path": "../../../packages/contracts-core"
+    },
+    {
+      "path": "../../../packages/backend-plugin-api"
+    },
+    {
+      "path": "../spec-common"
+    }
+  ]
+}

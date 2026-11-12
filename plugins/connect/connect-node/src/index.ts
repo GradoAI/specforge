@@ -1,0 +1,23 @@
+import { createServiceRef, createExtensionPoint } from '@fasrun/backend-plugin-api';
+import type { OperationContext } from '@fasrun/contracts-core';
+import type { InboxEvent, InboxReceipt, ExternalAction, ActionResult } from '@fasrun/plugin-connect-common';
+
+export interface ConnectService {
+  accept(context: OperationContext, event: InboxEvent): Promise<InboxReceipt>;
+  reconcile(context: OperationContext, integrationId: string): Promise<{ cursor: string | null; completed: boolean }>;
+  performAction(context: OperationContext, action: ExternalAction): Promise<ActionResult>;
+  queryAction(context: OperationContext, actionId: string): Promise<ActionResult>;
+}
+/** Gateway adapters have no database or repository port. Unknown outcomes must be queried before retry. */
+export interface ConnectAdapter {
+  readonly provider: string;
+  performAction(context: OperationContext, action: ExternalAction): Promise<ActionResult>;
+  queryAction(context: OperationContext, actionId: string): Promise<ActionResult>;
+}
+export interface ConnectAdapters {
+  register(adapter: ConnectAdapter): void;
+}
+export const connectAdapters = createExtensionPoint<ConnectAdapters>({ id: 'connect.adapters' });
+
+/** Owner-bound root facade; its factory binds connect's repository, never the caller's schema. */
+export const connectServiceRef = createServiceRef<ConnectService>({ id: 'connect.service', scope: 'root' });

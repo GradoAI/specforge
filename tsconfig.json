@@ -111,6 +111,30 @@
     },
     {
       "path": "tools/migration-check"
+    },
+    {
+      "path": "plugins/identity/identity-node"
+    },
+    {
+      "path": "plugins/orchestration/orchestration-node"
+    },
+    {
+      "path": "plugins/connect/connect-node"
+    },
+    {
+      "path": "plugins/spec/spec-node"
+    },
+    {
+      "path": "plugins/governance/governance-node"
+    },
+    {
+      "path": "plugins/knowledge/knowledge-node"
+    },
+    {
+      "path": "plugins/environment/environment-node"
+    },
+    {
+      "path": "plugins/entry/entry-node"
     }
   ]
 }
