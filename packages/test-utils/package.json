@@ -19,13 +19,18 @@
       "@fasrun/source": "./src/datasets/xinghe/index.ts",
       "types": "./dist/datasets/xinghe/index.d.mts",
       "default": "./dist/datasets/xinghe/index.mjs"
+    },
+    "./control-plane": {
+      "@fasrun/source": "./src/control-plane/index.ts",
+      "types": "./dist/control-plane/index.d.mts",
+      "default": "./dist/control-plane/index.mjs"
     }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsdown src/index.ts src/global-setup.ts src/datasets/xinghe/index.ts --format esm --platform node --dts",
+    "build": "tsdown src/index.ts src/global-setup.ts src/datasets/xinghe/index.ts src/control-plane/index.ts --format esm --platform node --dts",
     "test": "vitest run"
   },
   "devDependencies": {
@@ -35,6 +40,7 @@
     "vitest": "4.1.12"
   },
   "dependencies": {
+    "@dbos-inc/dbos-sdk": "5.4.0",
     "@fasrun/backend-plugin-api": "workspace:*",
     "@fasrun/contracts-core": "workspace:*",
     "@testcontainers/postgresql": "12.2.1",
