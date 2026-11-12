@@ -27,6 +27,20 @@ Node; invoke migration with `docker run --rm --env FASRUN_MIGRATE_DATABASE_URL
 <cli-image> bin/run.js migrate`. Supply the owner URL through the environment,
 never a Dockerfile, build argument or committed file.
 
+For an initialized development or test database, the same CLI image supports
+`docker run --rm --env FASRUN_DATABASE_URL --env FASRUN_ENVIRONMENT <cli-image>
+bin/run.js seed --dataset xinghe`. Set `FASRUN_DATABASE_URL` to the application-role
+connection and `FASRUN_ENVIRONMENT` explicitly to `development` or `test`; never
+reuse the migration owner connection for seed. Seed refuses `production` and
+repeated runs preserve unchanged organization rows. Supply a Docker network when
+the database is another container. The image's `NODE_ENV=production` controls the
+Node runtime; the CLI's deployment guard reads `FASRUN_ENVIRONMENT`.
+
+Core requires `FASRUN_CORE_DATABASE_URL` and listens on port 7010. Connect requires
+`FASRUN_CONNECT_CORE_URL` and listens on 7011; portal listens on 7013. Use container
+DNS and internal ports between services, and loopback-only published ports for
+local access. All three expose `/readyz`.
+
 ## Scanner and provenance
 
 Trivy 0.76.1 (2026-10-21, Apache-2.0) is pinned by version and release archive
