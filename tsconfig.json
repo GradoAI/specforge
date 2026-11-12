@@ -108,6 +108,9 @@
     },
     {
       "path": "plugins/connect/connect-backend"
+    },
+    {
+      "path": "tools/migration-check"
     }
   ]
 }

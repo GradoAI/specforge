@@ -942,6 +942,40 @@ importers:
         specifier: 4.1.12
         version: 4.1.12(@types/node@24.19.2)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1))
 
+  tools/migration-check:
+    devDependencies:
+      '@fasrun/backend-defaults':
+        specifier: workspace:*
+        version: link:../../packages/backend-defaults
+      '@fasrun/fasrun-dev-cli':
+        specifier: workspace:*
+        version: link:../../apps/fasrun-dev-cli
+      '@fasrun/test-utils':
+        specifier: workspace:*
+        version: link:../../packages/test-utils
+      '@testcontainers/postgresql':
+        specifier: 12.2.1
+        version: 12.2.1(supports-color@8.1.1)
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+      tsdown:
+        specifier: 0.23.5
+        version: 0.23.5(typescript@6.0.3)
+      vitest:
+        specifier: 4.1.12
+        version: 4.1.12(@types/node@24.19.2)(@vitest/coverage-v8@4.1.12)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1))
+
+
   tools/prettier-config: {}
 
   tools/scripts:
