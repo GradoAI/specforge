@@ -1,0 +1,13 @@
+{
+  "files": {
+    "changes/demo/requirements.md": "## 用户场景\n\n### US-1 User story\n实现它的需求条目：R-demo-001\n\n## 待澄清\n",
+    "changes/demo/design.md": "### D-1 A design\n对应需求：\n",
+    "changes/demo/tasks.md": "- [ ] T001 [P] A task — 对应 R-demo-001、D-1；修改范围 apps/demo/；用例 TC-DEMO-001；依赖 无\n",
+    "changes/demo/specs/demo/spec.md": "## ADDED Requirements\n\n### Requirement: R-demo-001 A requirement\nA complete description.\n#### Scenario: R-demo-001.S1 A scenario\n- GIVEN a value\n- WHEN validated\n- THEN accepted\n"
+  },
+  "expected": {
+    "code": "SPEC_DESIGN_MAPPING",
+    "file": "changes/demo/design.md",
+    "line": 1
+  }
+}

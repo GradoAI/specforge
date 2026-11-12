@@ -6,3 +6,5 @@ export interface SpecStatus {
   plugin: typeof SPEC_PLUGIN_ID;
   status: 'ok';
 }
+
+export * from './validation.js';

@@ -32,7 +32,8 @@
     "@fasrun/cli-templates": "workspace:*",
     "@oclif/core": "5.1.11",
     "prettier": "3.9.10",
-    "yaml": "2.9.1"
+    "yaml": "2.9.1",
+    "@fasrun/plugin-spec-common": "workspace:*"
   },
   "devDependencies": {
     "@fasrun/fasrun-portal-web": "workspace:*",
