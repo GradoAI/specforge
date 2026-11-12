@@ -1,0 +1,25 @@
+{
+  "name": "@fasrun/migration-check",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "PostgreSQL migration and schema checks",
+  "license": "AGPL-3.0-only",
+  "scripts": {
+    "build": "tsdown src/cli.ts src/diff-worker.ts --format esm --platform node --no-clean --no-dts --external @testcontainers/postgresql --external @fasrun/test-utils --external drizzle-orm --external pg",
+    "test": "node prepare.mjs && vitest run",
+    "check": "node prepare.mjs && cd ../.. && node tools/migration-check/dist/cli.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "vitest": "4.1.12",
+    "@fasrun/backend-defaults": "workspace:*",
+    "@fasrun/test-utils": "workspace:*",
+    "@fasrun/fasrun-dev-cli": "workspace:*",
+    "@types/pg": "8.23.1",
+    "pg": "8.23.1",
+    "drizzle-orm": "0.45.4",
+    "@testcontainers/postgresql": "12.2.1",
+    "tsdown": "0.23.5"
+  }
+}

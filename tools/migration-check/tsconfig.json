@@ -1,0 +1,18 @@
+{
+  "extends": "../tsconfig/tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "outDir": "dist",
+    "rootDir": ".",
+    "customConditions": ["@fasrun/source"]
+  },
+  "include": ["src/**/*.ts", "vitest.config.ts"],
+  "references": [
+    {
+      "path": "../../packages/test-utils"
+    },
+    {
+      "path": "../../packages/backend-defaults"
+    }
+  ]
+}

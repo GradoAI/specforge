@@ -1,0 +1,6 @@
+# D-7 explicitly requires integer optimistic-lock versions, not bigint.
+# D-8 journals each forward migration atomically; repeatability comes from its hash/journal,
+# not blanket IF EXISTS clauses. The existing immutable M0 journals predate a timeout policy; do not rewrite their hashes.
+# Timeout-setting recommendations are excluded until such a policy is specified.
+# Unsafe operations (including nonconcurrent indexes on existing tables) remain checked.
+excluded_rules = ["prefer-bigint-over-int", "prefer-robust-stmts", "require-lock-timeout", "require-statement-timeout"]
