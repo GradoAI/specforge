@@ -86,6 +86,15 @@ it('TC-SPEC-014 actual CLI rejects conflicts, invalid dates and invalid source w
     expect(await snapshot(root)).toEqual(before);
   }
 });
+it('TC-SPEC-014 refuses unsupported current sections without losing auxiliary content', async () => {
+  const { root } = await fixture();
+  await fs.appendFile(join(root, 'specs/demo/spec.md'), '\n## Notes\nImportant auxiliary content.\n');
+  const before = await snapshot(root);
+  const result = cli(['spec', 'archive', join(root, 'changes/demo')]);
+  expect(result.status).toBe(1);
+  expect(result.stdout).toContain('Unsupported current spec heading');
+  expect(await snapshot(root)).toEqual(before);
+});
 it('TC-SPEC-014 rejects an existing empty archive target and symlinked inputs', async () => {
   const { root } = await fixture();
   await fs.mkdir(join(root, 'changes/archive/2026-11-12-demo'), { recursive: true });

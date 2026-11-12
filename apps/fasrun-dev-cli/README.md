@@ -16,7 +16,11 @@ The archive planner validates the whole specification tree before merging ADDED,
 MODIFIED, REMOVED and RENAMED entries in memory, and validates the proposed tree
 again. Current capability files must exist. Duplicate additions, missing targets,
 rename title mismatches and an existing archive destination fail without writes.
-RENAMED keeps the requirement ID and scenarios. Header text in current specs and
+RENAMED keeps the requirement ID and scenarios. This writer supports the D-12 skeleton with one `## Requirements` section. Extra
+auxiliary headings are explicitly rejected before writing because this implementation
+cannot preserve them during rewriting. Such files may still pass `spec validate`;
+validation success does not imply this writer supports every document structure.
+Header text in supported current specs and
 all change-directory artifacts are retained.
 
 The CLI stages file contents, backs up and replaces affected current spec files,

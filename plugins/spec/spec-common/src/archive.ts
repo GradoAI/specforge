@@ -32,7 +32,23 @@ export function planSpecArchive(files: SpecFiles, allowedPaths: readonly string[
     const path = file.slice(`${change}/`.length);
     let value = targets.get(path);
     if (!value) {
-      const text = files[path] ?? fail(`Current spec missing: ${path}`);
+      if (files[path] === undefined) fail(`Current spec missing: ${path}`);
+      // This writer supports a single Requirements section. Refuse extra headings
+      // that it cannot preserve instead of silently discarding their contents.
+      if (
+        (files[path]!.match(/^## Requirements$/gm) ?? []).length !== 1 ||
+        /^### Requirement:[\s\S]*^## Requirements$/m.test(files[path]!)
+      )
+        fail(`Expected one Requirements section: ${path}`);
+      const unsupported = files[path]!.split(/\r?\n/).find(
+        (line, index) =>
+          /^#{1,3} /.test(line) &&
+          !(index === 0 && /^# [^#]/.test(line)) &&
+          line !== '## Requirements' &&
+          !/^### Requirement:/.test(line),
+      );
+      if (unsupported) fail(`Unsupported current spec heading in ${path}: ${unsupported}`);
+      const text = files[path]!;
       const index = text.search(/^### Requirement:/m);
       value = {
         header: (index < 0 ? text : text.slice(0, index)).trimEnd(),
