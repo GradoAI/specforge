@@ -1,0 +1,58 @@
+import type { Plugin } from './types.js';
+
+export const xinghePlugins: readonly Plugin[] = [
+  {
+    id: 'plugin_00000000000000000000000001',
+    name: '代码托管同步',
+    version: '2.0.4',
+    scope: '全组织',
+    permissions: ['读取仓库', '读取 PR 与评审'],
+    status: '运行中',
+    compatibility: '兼容',
+  },
+  {
+    id: 'plugin_00000000000000000000000002',
+    name: '工单桥接 · 通用',
+    version: '1.6.0',
+    scope: '全组织',
+    permissions: ['读取工单', '写入工单评论'],
+    status: '运行中',
+    compatibility: '兼容',
+  },
+  {
+    id: 'plugin_00000000000000000000000003',
+    name: 'CI 结果汇总',
+    version: '3.2.1',
+    scope: '全组织',
+    permissions: ['读取 CI 结果'],
+    status: '已启用',
+    compatibility: '兼容',
+  },
+  {
+    id: 'plugin_00000000000000000000000004',
+    name: '成本告警通知',
+    version: '1.1.0',
+    scope: '全组织',
+    permissions: ['读取成本', '发送通知'],
+    status: '已启用',
+    compatibility: '兼容',
+  },
+  {
+    id: 'plugin_00000000000000000000000005',
+    name: '数据库迁移检查',
+    version: '0.7.2',
+    scope: '数据中台组',
+    permissions: ['读取仓库', '运行检查'],
+    status: '已启用',
+    compatibility: '平台 2.9 将移除旧接口',
+  },
+  {
+    id: 'plugin_00000000000000000000000006',
+    name: '真机测试设备池',
+    version: '1.0.3',
+    scope: '移动端组',
+    permissions: ['调用外部设备池'],
+    status: '已停用',
+    compatibility: '需节点 ≥ 1.5.0',
+  },
+];

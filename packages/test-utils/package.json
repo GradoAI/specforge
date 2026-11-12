@@ -14,13 +14,18 @@
       "@fasrun/source": "./src/global-setup.ts",
       "types": "./dist/global-setup.d.mts",
       "default": "./dist/global-setup.mjs"
+    },
+    "./datasets/xinghe": {
+      "@fasrun/source": "./src/datasets/xinghe/index.ts",
+      "types": "./dist/datasets/xinghe/index.d.mts",
+      "default": "./dist/datasets/xinghe/index.mjs"
     }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsdown src/index.ts src/global-setup.ts --format esm --platform node --dts",
+    "build": "tsdown src/index.ts src/global-setup.ts src/datasets/xinghe/index.ts --format esm --platform node --dts",
     "test": "vitest run"
   },
   "devDependencies": {

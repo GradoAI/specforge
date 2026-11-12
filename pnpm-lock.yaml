@@ -288,6 +288,9 @@ importers:
 
   apps/fasrun-dev-cli:
     dependencies:
+      '@fasrun/test-utils':
+        specifier: workspace:*
+        version: link:../../packages/test-utils
       '@fasrun/backend-defaults':
         specifier: workspace:*
         version: link:../../packages/backend-defaults
@@ -300,6 +303,12 @@ importers:
       '@oclif/core':
         specifier: 5.1.11
         version: 5.1.11
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
       prettier:
         specifier: 3.9.10
         version: 3.9.10
@@ -310,16 +319,10 @@ importers:
       '@fasrun/fasrun-portal-web':
         specifier: workspace:*
         version: link:../fasrun-portal-web
-      '@fasrun/test-utils':
-        specifier: workspace:*
-        version: link:../../packages/test-utils
       '@types/node':
         specifier: 24.19.2
         version: 24.19.2
       '@types/pg':
-        specifier: 8.23.1
-        version: 8.23.1
-      pg:
         specifier: 8.23.1
         version: 8.23.1
       tsdown:
