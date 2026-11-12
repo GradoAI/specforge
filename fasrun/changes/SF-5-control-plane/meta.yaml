@@ -8,4 +8,7 @@ layers:
     status: approved
     pr: 52
   design:
+    status: approved
+    pr: 56
+  tasks:
     status: in_review

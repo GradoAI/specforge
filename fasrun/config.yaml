@@ -1,4 +1,4 @@
-# SF-1 D-11: repository-relative directories and exact root files approved by the task layer.
+# Task-layer scope: existing SF-1 paths; SF-5 T023 adds only the exact Fasfile path.
 allowedPaths:
   - apps/
   - packages/
@@ -24,3 +24,4 @@ allowedPaths:
   - LICENSE
   - CONTRIBUTING.md
   - .squawk.toml
+  - Fasfile
