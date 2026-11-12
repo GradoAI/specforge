@@ -138,7 +138,7 @@ packages/ 下必须有 backend-plugin-api、backend-defaults、contracts-core、
 - THEN Fasrun 自带的条目保持定义文件中的内容，被组织修改的条目保持修改后的值
 
 ### Requirement: R-platform-009 迁移检查
-迁移检查必须：用 squawk 检查迁移 SQL，拦下会长时间锁表的操作；在空库上执行全部迁移后，结果与 Drizzle 的表定义一致；按数据库设计规范检查新增与修改的表，包括约束与索引的命名前缀（pk_、fk_、uq_、ix_、ck_）、标准列、timestamptz、不使用 varchar(n) 与浮点金额、行级安全与注释。任一项不通过时以非零状态退出，并指明迁移文件、表与违反的规则。
+迁移检查必须：用 squawk 检查迁移 SQL，拦下会长时间锁表的操作；在空库上执行全部迁移后，结果与 Drizzle 的表定义一致；按数据库设计规范检查新增与修改的表，包括约束与索引的命名前缀（pk_、fk_、uq_、ix_、ck_）、标准列、timestamptz、不使用 varchar(n) 与浮点金额、行级安全与注释。每插件 schema 的两张迁移执行器内部表 `schema_migration`、`base_data_sync` 按 D-9 独立核对存在性、完整字段及严格类型、主键、owner 与 fasrun_app 拒绝访问，不套用业务 Drizzle 定义与 D-7 业务表规则；其余实际表不得被忽略。任一项不通过时以非零状态退出，并指明迁移文件（内部表指向执行器定义）、表与违反的规则。
 #### Scenario: R-platform-009.S1 不用 CONCURRENTLY 建索引被拦下
 - GIVEN 一个迁移在已有表上执行不带 CONCURRENTLY 的 CREATE INDEX
 - WHEN 运行迁移检查
@@ -152,9 +152,14 @@ packages/ 下必须有 backend-plugin-api、backend-defaults、contracts-core、
 - WHEN 运行迁移检查
 - THEN 检查失败，指明表与列
 #### Scenario: R-platform-009.S4 合规的迁移通过
-- GIVEN 样例表 identity.organization 的迁移
+- GIVEN 样例表 identity.organization 的迁移，以及执行器创建且符合 D-9 的两张内部表
 - WHEN 运行迁移检查
 - THEN 检查通过
+
+#### Scenario: R-platform-009.S5 内部表异常与未声明表被拦下
+- GIVEN 迁移执行器内部表缺失、字段或类型不符、主键不符、owner 不是 fasrun_owner，或 fasrun_app 获得访问权限；或者插件 schema 出现未声明的其他实际表
+- WHEN 运行迁移检查
+- THEN 检查失败并定位表与规则；两张内部表独立检查，其他实际表仍参加业务差异与规范检查，不按名称模式扩大豁免
 
 ### Requirement: R-platform-010 测试工具
 test-utils 必须提供测试宿主：在内存中装配后端插件，默认服务可以替换为模拟实现；集成测试必须能由 Testcontainers 启动 PostgreSQL，并为每个插件使用独立的 schema，测试之间互不影响。
@@ -217,8 +222,8 @@ test-utils 必须提供测试宿主：在内存中装配后端插件，默认服
 fasrun-core-svc、fasrun-connect-svc、fasrun-portal-web 与 fasrun migrate 所用的命令行必须各有容器镜像，用多阶段构建，以非 root 用户运行。
 #### Scenario: R-platform-013.S1 镜像以非 root 运行
 - GIVEN 构建好的各服务镜像
-- WHEN 检查镜像配置的运行用户并在容器中执行 id -u
-- THEN 用户不是 root，id -u 的结果不为 0
+- WHEN 检查最终 distroless 镜像配置的运行用户，并在该镜像容器内用 Node 执行 `process.getuid()`
+- THEN 配置的运行用户不是 root，实际 Node 进程 UID 为 65532；不使用 debug 镜像替代，也不只根据镜像配置判断
 
 ### Requirement: R-platform-014 Helm 部署与 k3d 一键脚本
 必须提供 Helm chart，部署 fasrun-core-svc、fasrun-connect-svc、fasrun-portal-web 与 CloudNativePG（运营者与一个单实例集群，本里程碑只建 Fasrun 数据库）；`fasrun migrate` 作为 Helm 的升级前任务运行，全部成功后才更新服务。Keycloak、可观测后端、TokenHub 与备份在 chart 中留有位置。deploy/k3d/ 中必须有一键脚本：在 k3d 集群 fasrun-dev 中构建并导入镜像、安装或升级 chart，可以重复执行；所有端口只绑定 127.0.0.1。
