@@ -247,11 +247,15 @@ describe('agent interface rules (R-platform-015)', () => {
     expect(Date.now() - started).toBeLessThan(10_000);
   });
 
-  it('exits with 5 and names the task for commands delivered later', async () => {
+  it('TC-PLATFORM-035 seed requires an explicit dataset and rejects production without connecting', async () => {
     const run = await cli(['seed', '--json']);
-    expect(run.code).toBe(5);
-    expect(JSON.parse(run.stdout)).toMatchObject({
-      error: { code: 'FASRUN_NOT_IMPLEMENTED', message: expect.stringContaining('T017') as string },
+    expect(run.code).toBe(2);
+    const production = await cli(['seed', '--dataset', 'xinghe', '--json'], {
+      env: { FASRUN_ENVIRONMENT: 'production' },
+    });
+    expect(production.code).toBe(3);
+    expect(JSON.parse(production.stdout)).toMatchObject({
+      error: { code: 'FASRUN_CONFIG_INVALID', message: expect.stringContaining('forbidden in production') as string },
     });
   });
 });

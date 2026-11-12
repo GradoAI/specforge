@@ -5,7 +5,7 @@ import { flush, run } from '@oclif/core';
 import Migrate from './commands/migrate.js';
 import Init from './commands/init.js';
 import Login from './commands/login.js';
-import { Seed } from './commands/placeholder.js';
+import Seed from './commands/seed.js';
 import SpecArchive from './commands/spec-archive.js';
 import Check from './commands/check.js';
 import SpecValidate from './commands/spec-validate.js';

@@ -33,3 +33,17 @@ exclusive access to the specification directory.
 
 SF-1 itself is archived only by its later T020 completion task. T016 supplies and
 tests this command against isolated fixtures; it does not archive unfinished work.
+
+## Example dataset (SF-1 T017)
+
+`fasrun seed --dataset xinghe` uses `FASRUN_DATABASE_URL` as `fasrun_app` with
+NOBYPASSRLS, and the existing `withOrg` transaction API for every organization.
+`FASRUN_ENVIRONMENT` defaults to `development`; `test` and `staging` are also
+accepted. `production` is refused before constructing a database connection.
+Run `fasrun migrate` separately with the migration role first.
+
+At M0, only `identity.organization` is written. Other prototype entities remain
+version-controlled dataset definitions; this command does not create later business
+tables. Repeating it leaves unchanged organization rows untouched. Changed example
+values update name/slug and the row timestamp/version. The JSON result reports
+the dataset and organization count. No credentials or raw database errors are printed.
