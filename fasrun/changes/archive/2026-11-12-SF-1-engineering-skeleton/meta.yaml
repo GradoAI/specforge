@@ -12,5 +12,8 @@ layers:
     status: approved
     pr: 5
   tasks:
-    status: in_review
+    status: approved
     pr: 6
+delivery:
+  prs: [7, 9, 8, 18, 21, 22, 26, 33, 27, 34, 37, 40, 47, 38, 39, 43, 45, 46, 48]
+archived: 2026-11-12
