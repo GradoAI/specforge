@@ -327,6 +327,8 @@ export async function traced(root, executable, args, writer, { probe = false } =
     );
   }
   let samples = 0;
+  let tracerResource = null;
+  let resourceGaps = 0;
   let last = performance.now();
   let maxSampleGapMs = 0;
   const sample = () => {
@@ -335,11 +337,20 @@ export async function traced(root, executable, args, writer, { probe = false } =
     last = now;
     samples++;
     if (Math.abs(Date.now() / 1000 - anchor.utc - (now - anchor.monotonicMs) / 1000) > 0.05) loss++;
+    const backendSample = procSample(child.pid, pageSize);
+    if (backendSample)
+      tracerResource = {
+        ...backendSample,
+        maxObservedRssBytes: Math.max(tracerResource?.maxObservedRssBytes ?? 0, backendSample.rssBytes),
+      };
+    const system = systemSample();
+    if (!system.cpu || Object.values(system.pressure).some((value) => value === null)) resourceGaps++;
     writer.add({
       kind: 'system',
       monotonicMs: now,
       utc: Date.now() / 1000,
-      ...systemSample(),
+      ...system,
+      tracerResource: backendSample,
       observer: process.resourceUsage(),
     });
     for (const pid of ledger.live()) {
@@ -389,6 +400,8 @@ export async function traced(root, executable, args, writer, { probe = false } =
     outputBytes,
     samples,
     maxSampleGapMs,
+    tracerResource,
+    resourceGaps,
     clockTicks,
     pageSize,
     elapsedMs: performance.now() - start,
@@ -399,6 +412,7 @@ export async function traced(root, executable, args, writer, { probe = false } =
     loss,
     ledger: state,
     complete:
+      !resourceGaps &&
       !spawnError &&
       !cancelled &&
       !loss &&

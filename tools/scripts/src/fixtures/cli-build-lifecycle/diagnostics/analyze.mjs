@@ -214,6 +214,8 @@ export function summarize(ledger, graph) {
       } catch {
         gap = 'incomplete-or-contradictory-task-timing';
       }
+      if (!gap && intervals.some((entry) => entry.end - entry.start >= 0.4 && !entry.resource))
+        gap = 'long-lived-compiler-resource-missing';
     }
     results.push({
       fixture,
