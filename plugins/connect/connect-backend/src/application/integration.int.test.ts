@@ -322,10 +322,12 @@ describe('T008 real CORE state and isolated gateway', () => {
     expect(claimed.length).toBeGreaterThan(0);
     const first = claimed[0]!;
     await expect(outbox.ack({ eventId: first.event.eventId, leaseToken: 'wrong' })).rejects.toThrow();
+    // Claim eligibility uses PostgreSQL time; do not assume the host clock is in sync.
+    const due = await owner.query<{ retry_at: Date }>("select now() - interval '1 second' as retry_at");
     await outbox.retry({
       eventId: first.event.eventId,
       leaseToken: first.leaseToken,
-      retryAt: new Date().toISOString(),
+      retryAt: due.rows[0]!.retry_at.toISOString(),
     });
     const retry = await core()
       .outbox(orgId)
