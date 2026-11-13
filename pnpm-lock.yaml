@@ -568,19 +568,49 @@ importers:
 
   plugins/connect/connect-backend:
     dependencies:
+      '@fasrun/backend-defaults':
+        specifier: workspace:*
+        version: link:../../../packages/backend-defaults
       '@fasrun/backend-plugin-api':
         specifier: workspace:*
         version: link:../../../packages/backend-plugin-api
+      '@fasrun/contracts-core':
+        specifier: workspace:*
+        version: link:../../../packages/contracts-core
+      '@fasrun/plugin-connect-common':
+        specifier: workspace:*
+        version: link:../connect-common
+      '@fasrun/plugin-connect-node':
+        specifier: workspace:*
+        version: link:../connect-node
+      '@fasrun/plugin-governance-node':
+        specifier: workspace:*
+        version: link:../../governance/governance-node
+      '@fasrun/plugin-identity-node':
+        specifier: workspace:*
+        version: link:../../identity/identity-node
       drizzle-orm:
         specifier: 0.45.4
         version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
     devDependencies:
+      '@fasrun/plugin-identity-common':
+        specifier: workspace:*
+        version: link:../../identity/identity-common
       '@fasrun/test-utils':
         specifier: workspace:*
         version: link:../../../packages/test-utils
       '@types/node':
         specifier: 24.19.2
         version: 24.19.2
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      '@vitest/coverage-v8':
+        specifier: 4.1.12
+        version: 4.1.12(vitest@4.1.12)
       tsdown:
         specifier: 0.23.5
         version: 0.23.5(typescript@6.0.3)

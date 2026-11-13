@@ -7,3 +7,4 @@ export interface ConnectStatus {
   status: 'ok';
 }
 export * from './control-plane.js';
+export * from './state.js';

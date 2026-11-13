@@ -7,6 +7,34 @@
     "types": ["node"],
     "customConditions": ["@fasrun/source"]
   },
-  "include": ["src/**/*.ts", "drizzle.config.ts"],
-  "references": [{ "path": "../../../packages/backend-plugin-api" }, { "path": "../../../packages/test-utils" }]
+  "include": ["src/**/*.ts", "drizzle.config.ts", "vitest.config.ts"],
+  "references": [
+    {
+      "path": "../../../packages/backend-plugin-api"
+    },
+    {
+      "path": "../../../packages/test-utils"
+    },
+    {
+      "path": "../../../packages/backend-defaults"
+    },
+    {
+      "path": "../../../packages/contracts-core"
+    },
+    {
+      "path": "../connect-common"
+    },
+    {
+      "path": "../connect-node"
+    },
+    {
+      "path": "../../governance/governance-node"
+    },
+    {
+      "path": "../../identity/identity-node"
+    },
+    {
+      "path": "../../identity/identity-common"
+    }
+  ]
 }
