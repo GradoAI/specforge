@@ -11,6 +11,7 @@ function run(script: string) {
     cwd: directory,
     encoding: 'utf8',
     timeout: 15000,
+    killSignal: 'SIGKILL',
   });
   expect(result.error, result.stderr).toBeUndefined();
   expect(result.status, result.stderr).toBe(0);
@@ -145,6 +146,14 @@ describe('SF-7 native diagnostic facility (synthetic only; no lifecycle experime
 it('TC-SF7-DIAG-003: FIFO drains, original nonzero survives, cancellation settles before cleanup', () => {
   run(String.raw`${imports}
     const originalPath=process.env.PATH;
+    const create=fs.createReadStream;
+    let delayedOpens=0;
+    // Force the formerly racy ordering, without probabilistic repetition. The
+    // collector must supply an already-open reader fd, so this delayed open is
+    // never invoked after the final writer is gone.
+    fs.createReadStream=(file,options)=>create(file,{...options,fs:{
+      open(...args){delayedOpens++;setTimeout(()=>fs.open(...args),200)},read:fs.read,close:fs.close
+    }});
     const directory=fs.mkdtempSync(path.join(os.tmpdir(),'sf7-transport-test-'));
     const before=new Set(fs.readdirSync(os.tmpdir()).filter(name=>name.startsWith('sf7-trace-')));
     try {
@@ -159,6 +168,12 @@ it('TC-SF7-DIAG-003: FIFO drains, original nonzero survives, cancellation settle
       assert.equal(result.ledger.complete,true);
       assert.equal(result.parse.rejected,0); assert.equal(result.loss,0);
       assert.equal(result.complete,result.resourceGaps===0);
+      assert.equal(delayedOpens,0);
+      fs.writeFileSync(backend, '#!/bin/sh\nexit 23\n', {mode:0o700});
+      const failedWriter=evidenceWriter(path.join(directory,'failed-start'));
+      const failed=await traced(process.cwd(),'/bin/true',[],failedWriter,{probe:true});
+      failedWriter.finish({synthetic:true});
+      assert.equal(failed.code,23); assert.equal(failed.complete,false);
       // The fake tracee is the backend itself; signal handling therefore has a
       // real process to settle without invoking any repository test or build.
       fs.writeFileSync(backend, '#!/bin/sh\nwhile [ "$1" != "-o" ]; do shift; done\nshift\nfifo="$1"\ntrap "exit 143" TERM\nprintf "%s 1.000001 execve(\\"/bin/sh\\", [], 0x0) = 0\\n" "$$" > "$fifo"\nwhile :; do :; done\n', {mode:0o700});
@@ -168,6 +183,18 @@ it('TC-SF7-DIAG-003: FIFO drains, original nonzero survives, cancellation settle
       clearTimeout(cancel); cancelledWriter.finish({synthetic:true});
       assert.equal(cancelled.cancelled,'SIGTERM'); assert.equal(cancelled.complete,false);
       assert.deepEqual(new Set(fs.readdirSync(os.tmpdir()).filter(name=>name.startsWith('sf7-trace-'))),before);
-    } finally { process.env.PATH=originalPath; fs.rmSync(directory,{recursive:true,force:true}); }
+    } finally { fs.createReadStream=create; process.env.PATH=originalPath; fs.rmSync(directory,{recursive:true,force:true}); }
   `);
 }, 20000);
+
+it('TC-SF7-DIAG-003: a wedged observer cannot swallow the test harness timeout', () => {
+  const start = Date.now();
+  const result = spawnSync(process.execPath, ['-e', "process.on('SIGTERM',()=>{});setInterval(()=>{},1000)"], {
+    timeout: 200,
+    killSignal: 'SIGKILL',
+    encoding: 'utf8',
+  });
+  expect(result.error).toMatchObject({ code: 'ETIMEDOUT' });
+  expect(result.signal).toBe('SIGKILL');
+  expect(Date.now() - start).toBeLessThan(5000);
+});

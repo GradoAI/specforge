@@ -248,7 +248,11 @@ export async function traced(root, executable, args, writer, { probe = false } =
   // /dev/fd/N. A private FIFO keeps raw trace bytes off disk. Hold RDWR until
   // strace settles so failed spawn/options cannot leave a blocked FIFO open.
   const hold = fs.openSync(fifo, fs.constants.O_RDWR);
-  const traceStream = fs.createReadStream(fifo);
+  // Establish the reader synchronously while the hold guarantees a writer.
+  // An async open can run after a fast backend exits and hold is closed: Linux
+  // then waits forever for another writer (wait_for_partner), never reaching EOF.
+  const reader = fs.openSync(fifo, fs.constants.O_RDONLY);
+  const traceStream = fs.createReadStream(fifo, { fd: reader, autoClose: true });
   const drained = new Promise((resolve) => {
     traceStream.once('close', resolve);
   });
@@ -364,9 +368,9 @@ export async function traced(root, executable, args, writer, { probe = false } =
   let probeTimeout;
   if (probe)
     probeTimeout = setTimeout(() => {
-      cancelled = 'probe-deadline';
+      cancelled ??= 'probe-deadline';
       try {
-        process.kill(-child.pid, 'SIGKILL');
+        if (child.exitCode === null && child.signalCode === null) process.kill(-child.pid, 'SIGKILL');
       } catch {
         /* already closed */
       }
@@ -380,6 +384,7 @@ export async function traced(root, executable, args, writer, { probe = false } =
       child.once('close', (code, signal) => resolve({ code, signal }));
     });
   } finally {
+    clearTimeout(probeTimeout);
     fs.closeSync(hold);
     await drained;
     traceStream.destroy();
