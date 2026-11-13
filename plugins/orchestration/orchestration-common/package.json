@@ -21,7 +21,8 @@
   "devDependencies": {
     "@types/node": "24.19.2",
     "tsdown": "0.23.5",
-    "vitest": "4.1.12"
+    "vitest": "4.1.12",
+    "@vitest/coverage-v8": "4.1.12"
   },
   "dependencies": {
     "@fasrun/contracts-core": "workspace:*",
