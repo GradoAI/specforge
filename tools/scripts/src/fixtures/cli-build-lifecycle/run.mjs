@@ -206,6 +206,13 @@ try {
   cli.scripts.build = `node ../../${helper}/task.mjs build`;
   cli.scripts.test = `node ../../${helper}/task.mjs cli`;
   migration.scripts.test = `node ../../${helper}/task.mjs migration`;
+  // The runtime probes do not run portal tests or migration-check's database suite.
+  // Keep the real CLI runtime dependency closure; its complete production DAG was
+  // checked above. This removes test-only upstream work in this disposable copy.
+  for (const [name, version] of Object.entries(cli.devDependencies)) {
+    if (version.startsWith('workspace:')) delete cli.devDependencies[name];
+  }
+  migration.devDependencies = { [cliName]: 'workspace:*' };
   write('apps/fasrun-dev-cli/package.json', cli);
   write('tools/migration-check/package.json', migration);
   // Unrelated task proves continuation does not globally serialize/block the graph.
@@ -217,9 +224,14 @@ try {
   });
   await run('git', ['init', '-q']);
   await run('git', ['add', '.']);
+  const probeDag = JSON.parse(await run('pnpm', turbo(['--dry=json'])));
+  assert.ok(!probeDag.tasks.some((item) => item.taskId.startsWith('@fasrun/fasrun-portal-web#')));
+  for (const [name, version] of Object.entries(cli.dependencies)) {
+    if (version.startsWith('workspace:')) assert.ok(probeDag.tasks.some((item) => item.taskId === `${name}#build`));
+  }
   const fixedConfig = structuredClone(config);
   const fixedCli = structuredClone(cli);
-  // Cold: real upstream builds run once; subsequent experiments reuse their cache.
+  // Cold: no outputs yet. Force cases retain real runtime-upstream build scripts.
   await run('pnpm', turbo());
   ordered();
   reset();
