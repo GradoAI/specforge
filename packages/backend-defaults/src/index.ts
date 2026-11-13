@@ -15,3 +15,4 @@ export {
   type EventForwarder,
   type EventForwarderOptions,
 } from './events/index.js';
+export { createContentAddressedStorage, contentDigest } from './storage/content-addressed.js';

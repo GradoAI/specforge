@@ -7,3 +7,11 @@ export interface OrchestrationStatus {
   status: 'ok';
 }
 export * from './control-plane.js';
+export {
+  canonicalData,
+  containsScope,
+  normalizeLabels,
+  referenceVersion,
+  derivedLabels,
+  type DataObject,
+} from './data.js';

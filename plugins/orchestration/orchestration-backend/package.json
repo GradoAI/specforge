@@ -12,20 +12,32 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "migrations",
+    "drizzle.config.ts",
+    "src/infrastructure/schema"
   ],
   "scripts": {
     "build": "tsdown",
-    "test": "vitest run"
+    "test": "vitest run --config src/application/data/vitest.config.ts"
   },
   "dependencies": {
     "@fasrun/backend-plugin-api": "workspace:*",
-    "drizzle-orm": "0.45.4"
+    "drizzle-orm": "0.45.4",
+    "@fasrun/backend-defaults": "workspace:*",
+    "@fasrun/contracts-core": "workspace:*",
+    "@fasrun/plugin-orchestration-common": "workspace:*",
+    "@fasrun/plugin-governance-common": "workspace:*",
+    "pg": "8.23.1",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@fasrun/test-utils": "workspace:*",
     "@types/node": "24.19.2",
     "tsdown": "0.23.5",
-    "vitest": "4.1.12"
+    "vitest": "4.1.12",
+    "@types/pg": "8.23.1",
+    "@vitest/coverage-v8": "4.1.12",
+    "@fasrun/plugin-identity-common": "workspace:*"
   }
 }

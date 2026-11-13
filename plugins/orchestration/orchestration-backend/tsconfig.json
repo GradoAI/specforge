@@ -8,5 +8,27 @@
     "customConditions": ["@fasrun/source"]
   },
   "include": ["src/**/*.ts", "drizzle.config.ts"],
-  "references": [{ "path": "../../../packages/backend-plugin-api" }, { "path": "../../../packages/test-utils" }]
+  "references": [
+    {
+      "path": "../../../packages/backend-plugin-api"
+    },
+    {
+      "path": "../../../packages/test-utils"
+    },
+    {
+      "path": "../../../packages/backend-defaults"
+    },
+    {
+      "path": "../../../packages/contracts-core"
+    },
+    {
+      "path": "../orchestration-common"
+    },
+    {
+      "path": "../../governance/governance-common"
+    },
+    {
+      "path": "../../identity/identity-common"
+    }
+  ]
 }
