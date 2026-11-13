@@ -4,10 +4,14 @@ import {
   coreServices,
   createBackendModule,
   createBackendPlugin,
+  createServiceFactory,
   createExtensionPoint,
 } from '@fasrun/backend-plugin-api';
 import { ErrorCodes } from '@fasrun/contracts-core';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { inspect } from 'node:util';
+import pg from 'pg';
 import { mockServices } from './mock-services.js';
 import { startTestBackend } from './test-backend.js';
 
@@ -81,4 +85,40 @@ describe('startTestBackend (R-platform-010)', () => {
     await backend.stop();
     expect(order).toEqual(['module', 'plugin:lint']);
   });
+});
+
+it('TC-PLATFORM-032 stop cleans database after HTTP close failure and retains only safe errors', async () => {
+  const pool = new pg.Pool();
+  const end = vi.spyOn(pool, 'end');
+  const backend = await startTestBackend({
+    features: [
+      createBackendPlugin({
+        pluginId: 'cleanup',
+        register(env) {
+          env.registerInit({ deps: { database: coreServices.database }, init: () => undefined });
+        },
+      }),
+    ],
+    services: [
+      createServiceFactory({
+        service: coreServices.database,
+        deps: {},
+        factory: () => ({ schema: 'cleanup', db: drizzle(pool) }),
+      }),
+    ],
+  });
+  const close = backend.server.close.bind(backend.server);
+  vi.spyOn(backend.server, 'close').mockRejectedValue(new Error('private-server-canary'));
+  try {
+    const stop = backend.stop();
+    expect(backend.stop()).toBe(stop);
+    const failure = await stop.catch((error: unknown) => error);
+    expect(failure).toBeInstanceOf(AggregateError);
+    expect(inspect(failure, { showHidden: true, depth: 10 })).toContain('server-close');
+    expect(inspect(failure, { showHidden: true, depth: 10 })).not.toContain('private-server-canary');
+    expect(end).toHaveBeenCalledTimes(1);
+  } finally {
+    await close();
+    vi.restoreAllMocks();
+  }
 });
