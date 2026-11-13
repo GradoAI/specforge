@@ -618,6 +618,38 @@ importers:
         specifier: 4.1.12
         version: 4.1.12(@types/node@24.19.2)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1))
 
+  plugins/connect/connect-backend-module-github:
+    dependencies:
+      '@fasrun/backend-plugin-api':
+        specifier: workspace:*
+        version: link:../../../packages/backend-plugin-api
+      '@fasrun/contracts-core':
+        specifier: workspace:*
+        version: link:../../../packages/contracts-core
+      '@fasrun/plugin-connect-common':
+        specifier: workspace:*
+        version: link:../connect-common
+      '@fasrun/plugin-connect-node':
+        specifier: workspace:*
+        version: link:../connect-node
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
+      '@vitest/coverage-v8':
+        specifier: 4.1.12
+        version: 4.1.12(vitest@4.1.12)
+      tsdown:
+        specifier: 0.23.5
+        version: 0.23.5(typescript@6.0.3)
+      vitest:
+        specifier: 4.1.12
+        version: 4.1.12(@types/node@24.19.2)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1))
+
+
   plugins/connect/connect-common:
     dependencies:
       '@fasrun/contracts-core':

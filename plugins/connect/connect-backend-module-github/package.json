@@ -1,0 +1,34 @@
+{
+  "name": "@fasrun/plugin-connect-backend-module-github",
+  "version": "0.0.0",
+  "description": "Connect plugin, backend-module-github package",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": {
+      "@fasrun/source": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fasrun/backend-plugin-api": "workspace:*",
+    "@fasrun/contracts-core": "workspace:*",
+    "@fasrun/plugin-connect-common": "workspace:*",
+    "@fasrun/plugin-connect-node": "workspace:*",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "tsdown": "0.23.5",
+    "vitest": "4.1.12",
+    "@vitest/coverage-v8": "4.1.12"
+  }
+}

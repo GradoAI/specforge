@@ -1,0 +1,25 @@
+{
+  "extends": "../../../tools/tsconfig/tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist/tsc",
+    "rootDir": ".",
+    "emitDeclarationOnly": true,
+    "types": ["node"],
+    "customConditions": ["@fasrun/source"]
+  },
+  "include": ["src/**/*.ts", "vitest.config.ts"],
+  "references": [
+    {
+      "path": "../../../packages/backend-plugin-api"
+    },
+    {
+      "path": "../../../packages/contracts-core"
+    },
+    {
+      "path": "../connect-common"
+    },
+    {
+      "path": "../connect-node"
+    }
+  ]
+}
