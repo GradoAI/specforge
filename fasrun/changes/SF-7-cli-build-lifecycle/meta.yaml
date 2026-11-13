@@ -13,3 +13,5 @@ layers:
   tasks:
     status: approved
     pr: 74
+delivery:
+  prs: [78, 88]
