@@ -1,3 +1,4 @@
+import roleCatalog from './roles.json' with { type: 'json' };
 import { z } from 'zod';
 import { scopeSchema, type ActorContext, type OperationContext } from '@fasrun/contracts-core';
 import {
@@ -8,23 +9,8 @@ import {
   type ConditionExpression,
 } from '@fasrun/plugin-governance-common';
 import type { Decision } from './control-plane.js';
-export const ROLES = [
-  'platform_admin',
-  'platform_auditor',
-  'organization_admin',
-  'budget_admin',
-  'security_admin',
-  'environment_admin',
-  'operations',
-  'team_lead',
-  'member',
-  'observer',
-  'requirements_reviewer',
-  'design_reviewer',
-  'merge_approver',
-  'machine_owner',
-] as const;
-export type Role = (typeof ROLES)[number];
+export type Role = keyof typeof roleCatalog;
+export const ROLES: readonly Role[] = Object.keys(roleCatalog) as Role[];
 export const PERMISSIONS = {
   'work.view': [
     'organization_admin',

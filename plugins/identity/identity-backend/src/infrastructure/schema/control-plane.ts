@@ -1,4 +1,4 @@
-import { ROLES } from '@fasrun/plugin-identity-common';
+import roleCatalog from '@fasrun/plugin-identity-common/roles.json' with { type: 'json' };
 import { idCheck } from '@fasrun/backend-defaults';
 import { sql } from 'drizzle-orm';
 import {
@@ -98,7 +98,14 @@ export const roleAssignment = identitySchema
       check('ck_role_assignment_id', idCheck(t.id, 'rol')),
       check('ck_role_assignment_org', idCheck(t.orgId, 'org')),
       check('ck_role_assignment_version', sql`${t.version}>0`),
-      check('ck_role_assignment_role', sql`${t.role} in (${sql.raw(ROLES.map((role) => `'${role}'`).join(','))})`),
+      check(
+        'ck_role_assignment_role',
+        sql`${t.role} in (${sql.raw(
+          Object.keys(roleCatalog)
+            .map((role) => `'${role}'`)
+            .join(','),
+        )})`,
+      ),
       index('ix_role_assignment_org_created_id').on(t.orgId, t.createdAt, t.id),
       pgPolicy('role_assignment_org_isolation', {
         using: sql`${t.orgId}=current_setting('fasrun.org_id',true)`,
