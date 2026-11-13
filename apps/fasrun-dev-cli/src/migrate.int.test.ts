@@ -1,5 +1,5 @@
 // R-platform-008.S1–S4, D-8: run the shipped CLI against real PostgreSQL roles.
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -71,24 +71,50 @@ it('TC-PLATFORM-024 real identity migrations run once, grant business tables and
   const first = await cli(ROOT, database.ownerUrl);
   expect(first.code, first.stderr + first.stdout).toBe(0);
   const result = envelope(first.stdout).result;
-  expect(result.plugins).toHaveLength(9);
-  expect(result.plugins.find((plugin) => plugin.schema === 'identity')?.migrations).toEqual([
-    '0000_organization.sql',
-    '0001_organization-comments.sql',
+  expect(result.plugins.map((plugin) => plugin.schema).sort()).toEqual([
+    'connect',
+    'entry',
+    'environment',
+    'governance',
+    'identity',
+    'insight',
+    'knowledge',
+    'orchestration',
+    'spec',
   ]);
+  // Independent expectation: Git's tracked SQL files, not the migration discoverer or its journal.
+  const prefix = 'plugins/identity/identity-backend/migrations/';
+  const expected = execFileSync('git', ['ls-files', '-z', '--', prefix], { cwd: ROOT, encoding: 'utf8' })
+    .split('\0')
+    .filter((file) => file.startsWith(prefix))
+    .map((file) => file.slice(prefix.length))
+    .filter((file) => !file.includes('/') && file.endsWith('.sql'))
+    .sort();
+  expect(expected.slice(0, 2)).toEqual(['0000_organization.sql', '0001_organization-comments.sql']);
+  expect(result.plugins.find((plugin) => plugin.schema === 'identity')?.migrations).toEqual(expected);
   const owner = await connect(database.ownerUrl);
-  const before = await owner.query('select * from identity.schema_migration order by filename');
+  const before = await owner.query<{ filename: string }>('select * from identity.schema_migration order by filename');
+  expect(before.rows.map((row) => row.filename)).toEqual(expected);
   const catalogSql = `select c.relname, a.attname, a.atttypid, a.attnotnull, pg_get_expr(d.adbin, d.adrelid) as default_value
     from pg_class c join pg_namespace n on n.oid = c.relnamespace
     join pg_attribute a on a.attrelid = c.oid and a.attnum > 0 and not a.attisdropped
     left join pg_attrdef d on d.adrelid = c.oid and d.adnum = a.attnum
     where n.nspname = 'identity' order by c.relname, a.attnum`;
   const catalogBefore = (await owner.query(catalogSql)).rows;
+  const structureSql = `select 'constraint' as kind, c.relname as object, x.conname as name, pg_get_constraintdef(x.oid) as definition
+    from pg_constraint x join pg_class c on c.oid=x.conrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='identity'
+    union all select 'index', tablename, indexname, indexdef from pg_indexes where schemaname='identity'
+    union all select 'policy', tablename, policyname, jsonb_build_array(permissive,roles,cmd,qual,with_check)::text from pg_policies where schemaname='identity'
+    union all select 'rls', c.relname, '', jsonb_build_array(c.relrowsecurity,c.relforcerowsecurity)::text from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='identity' and c.relkind='r'
+    union all select 'trigger', c.relname, t.tgname, pg_get_triggerdef(t.oid) from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='identity' and not t.tgisinternal
+    order by kind, object, name`;
+  const structureBefore = (await owner.query(structureSql)).rows;
   const second = await cli(ROOT, database.ownerUrl, false);
   expect(second.code).toBe(0);
   expect(second.stdout.trim()).toBe('没有待执行的迁移');
   expect((await owner.query('select * from identity.schema_migration order by filename')).rows).toEqual(before.rows);
   expect((await owner.query(catalogSql)).rows).toEqual(catalogBefore);
+  expect((await owner.query(structureSql)).rows).toEqual(structureBefore);
   const app = await connect(database.appUrl);
   expect((await app.query('select * from identity.organization')).rows).toEqual([]);
   for (const table of ['schema_migration', 'base_data_sync']) {

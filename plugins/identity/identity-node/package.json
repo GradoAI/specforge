@@ -27,6 +27,7 @@
     "@fasrun/contracts-core": "workspace:*",
     "zod": "4.6.7",
     "@fasrun/backend-plugin-api": "workspace:*",
-    "@fasrun/plugin-identity-common": "workspace:*"
+    "@fasrun/plugin-identity-common": "workspace:*",
+    "@fasrun/plugin-governance-common": "workspace:*"
   }
 }

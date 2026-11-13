@@ -15,6 +15,20 @@
       "when": 1794469164052,
       "tag": "0001_organization-comments",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794501216924,
+      "tag": "0002_identity-control-plane",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794501236214,
+      "tag": "0003_identity-integrity",
+      "breakpoints": true
     }
   ]
 }

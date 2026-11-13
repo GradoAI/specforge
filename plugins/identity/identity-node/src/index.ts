@@ -1,12 +1,29 @@
 import { createServiceRef, createExtensionPoint } from '@fasrun/backend-plugin-api';
 import type { ActorContext, OperationContext } from '@fasrun/contracts-core';
-import type { Decision, Authorization } from '@fasrun/plugin-identity-common';
+import type {
+  Decision,
+  Authorization,
+  IdentityRequest,
+  Member,
+  EffectivePermission,
+} from '@fasrun/plugin-identity-common';
 
 export interface IdentityService {
-  authenticateContext(
-    credential: string,
-    request: { clientId: string; source: ActorContext['source']; traceId: string },
+  beginLogin(orgId: string): Promise<{ url: string; browserCookie: string }>;
+  completeLogin(input: {
+    state: string;
+    browserCookie: string;
+    code: string;
+    request: IdentityRequest;
+  }): Promise<{ actor: ActorContext; csrf: string; cookie: string }>;
+  authenticateSession(
+    sessionToken: string,
+    request: IdentityRequest & { method: string; origin?: string; csrf?: string },
   ): Promise<ActorContext>;
+  logout(context: OperationContext, sessionToken: string): Promise<void>;
+  effectivePermissions(context: OperationContext): Promise<EffectivePermission[]>;
+  authenticateContext(credential: string, request: IdentityRequest): Promise<ActorContext>;
+  resolveMembers(context: OperationContext, memberIds: string[]): Promise<Pick<Member, 'id' | 'orgId' | 'active'>[]>;
   authorize(context: OperationContext): Promise<Decision>;
   issueAuthorization(
     context: OperationContext,
