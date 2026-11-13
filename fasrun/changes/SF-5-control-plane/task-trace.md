@@ -1,6 +1,6 @@
 # SF-5 任务、场景与测试追溯
 
-本表为待评审的测试分配，不是执行报告。全部41需求/75场景原文以已合入的specs为准，设计映射沿用 [design-trace.md](design-trace.md)。每行用例必须覆盖对应场景全部GIVEN/WHEN/THEN，不以场景标题代替断言；任务的额外负例见tasks.md细则。测试路径是计划新增/扩展的位置，不伪装现有文件链接。
+本表初次提交时为待评审的测试分配，任务层已通过#57合入；本次仅按已确认#67/#68维护对应落点，不是执行报告。全部41需求/75场景原文以已合入的specs为准，设计映射沿用 [design-trace.md](design-trace.md)。每行用例必须覆盖对应场景全部GIVEN/WHEN/THEN，不以场景标题代替断言；任务的额外负例见tasks.md细则。测试路径是计划新增/扩展的位置，不伪装现有文件链接。
 
 TC-CF-001–020保留原编号；R-platform-017.S1–S3仍为TC-PLATFORM-051–053。其余52场景使用本工作命名空间TC-SF5，避免复用3.10中TC-ID（后续服务账号/定时任务/离职）或现有TC-SPEC编号。已分配后不重排，后续新增仅追加。独立任务辅助测试不替代场景验收。
 
@@ -76,7 +76,7 @@ TC-CF-001–020保留原编号；R-platform-017.S1–S3仍为TC-PLATFORM-051–0
 | R-spec-007.S1 领域确认不可遗漏 | TC-SF5-SPEC-006 | T017 | `plugins/spec/spec-backend/src/application/reviews/reviews.int.test.ts` |
 | R-spec-007.S2 确认只对应当前版本 | TC-SF5-SPEC-007 | T017 | `plugins/spec/spec-backend/src/application/reviews/reviews.int.test.ts` |
 | R-spec-008.S1 固定提交与拒绝放宽 | TC-SF5-SPEC-008 | T007 | `plugins/knowledge/knowledge-backend/src/application/project-context.int.test.ts；plugins/spec/spec-common/src/archive-authorization/archive.test.ts` |
-| R-spec-008.S2 归档的有限授权 | TC-SF5-SPEC-009 | T007 | `plugins/knowledge/knowledge-backend/src/application/project-context.int.test.ts；plugins/spec/spec-common/src/archive-authorization/archive.test.ts` |
+| R-spec-008.S2 归档的有限授权 | TC-SF5-SPEC-009 | T007 | `plugins/knowledge/knowledge-backend/src/application/project-context.int.test.ts；plugins/spec/spec-common/src/archive-authorization/archive.test.ts；apps/fasrun-dev-cli/src/lib/spec-archive.test.ts` |
 | R-spec-009.S1 工单到规格确认可追溯 | TC-SF5-SPEC-010 | T024 | `deploy/validation/sf5/（真实对象证据写evidence/）` |
 | R-spec-009.S2 重试不会重复创建 | TC-SF5-SPEC-011 | T009、T017 | `plugins/spec/spec-backend/src/application/reviews/reviews.int.test.ts` |
 | R-spec-010.S1 更换实现不改变控制平面规则 | TC-SF5-SPEC-012 | T011、T024 | `plugins/orchestration/orchestration-backend/src/application/agents/invoker.int.test.ts` |
@@ -89,6 +89,14 @@ TC-CF-001–020保留原编号；R-platform-017.S1–S3仍为TC-PLATFORM-051–0
 - T021的TC-SF5-INTEGRATION-001/002分别覆盖工单到规格闭环组合、跨入口权限/策略/标签/审计负例；不取代上表所有单场景断言。T023的TC-SF5-CI-001检查快/全清单和CI实际执行证据；T025的TC-SF5-ARCHIVE-001检查验收齐全及实际archive结果，合入后main证据另补。
 - TC-SF5-CONTRACT-001、FIXTURE-001、RUNTIME-001、ASSEMBLY-001、DATA-001、DEPLOY-001是服务契约/测试资源/运行时隔离/装配/seed/部署的辅助测试，各自对应tasks.md的需求和D条目，不扩展M1范围。
 
-## 本层自检边界
+## 初始任务层自检边界（历史记录）
 
 机械工具验证编号、需求覆盖、依赖无环及路径；另核对75场景有稳定用例与任务、D-1–D-19均落地、每用例具全部场景断言、共享文件与运行资源归属明确、依赖能从无前置任务到达且全部收敛T025。已批准requirements/design及追溯来源文件逐字保留。本层没有执行任何新产品用例，不声称M1验收通过。
+
+## 已有平台回归的维护追溯
+
+| 现行需求（不修改） | 验收用例 | 维护任务 | 路径 |
+| --- | --- | --- | --- |
+| R-platform-008.S1 首次执行全部迁移、重复执行记录与结构不变 | TC-PLATFORM-024 | T006 | `apps/fasrun-dev-cli/src/migrate.int.test.ts` |
+
+#67/#68的产品方案条款、确认来源及精确范围见[修订追溯](scope-revision-67-68.md)。
