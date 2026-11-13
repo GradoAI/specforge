@@ -8,6 +8,10 @@
     "test": {
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"]
+    },
+    "@fasrun/fasrun-dev-cli#test": {
+      "dependsOn": ["^build", "build"],
+      "outputs": ["coverage/**"]
     }
   }
 }

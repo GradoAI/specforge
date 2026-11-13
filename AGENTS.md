@@ -65,7 +65,7 @@ pnpm install --frozen-lockfile
 pnpm typecheck
 pnpm lint
 pnpm format
-pnpm test --force --continue
+pnpm test --force --continue=dependencies-successful
 gitleaks git --redact .
 ```
 

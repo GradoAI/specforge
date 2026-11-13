@@ -1,5 +1,31 @@
 # FASRUN-DEV-CLI
 
+## Build and test
+
+From the repository root, use the dependency-aware package test entry:
+
+```sh
+pnpm exec turbo run test --filter=@fasrun/fasrun-dev-cli --force
+```
+
+Turbo builds the CLI and its workspace dependencies before running Vitest. The
+CLI build task is the only producer of `dist`; tests only consume it. To run the
+package script directly, first complete the build successfully:
+
+```bash
+set -euo pipefail
+pnpm exec turbo run build --filter=@fasrun/fasrun-dev-cli
+pnpm --filter @fasrun/fasrun-dev-cli test
+```
+
+Direct Vitest/package test invocation does not build missing artifacts. Within one
+Turbo task graph, both CLI tests and migration-check tests wait for the same CLI
+build. A failed build prevents these consumers from starting. For local checks
+that continue independent tasks, use `--continue=dependencies-successful`; bare
+`--continue` also runs failed tasks' dependents and is not the supported entry.
+This ordering does not coordinate independent commands in separate terminals or
+commands that explicitly bypass dependencies.
+
 ## Archive a delivered specification change
 
 ```sh
