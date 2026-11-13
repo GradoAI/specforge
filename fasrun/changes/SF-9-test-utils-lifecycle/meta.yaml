@@ -1,0 +1,8 @@
+work: SF-9
+title: 公共测试连接生命周期与失败脱敏维护
+issue: https://github.com/fasrun/fasrun/issues/90
+size: small
+template_version: 1
+layers:
+  requirements:
+    status: in_review
