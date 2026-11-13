@@ -156,7 +156,9 @@ it('TC-SF7-DIAG-003: FIFO drains, original nonzero survives, cancellation settle
       const result=await traced(process.cwd(),'/bin/true',[],writer,{probe:true});
       writer.finish({synthetic:true});
       assert.equal(result.code,7); assert.equal(result.ledger.processes[0].exit.code,7);
-      assert.equal(result.complete,true);
+      assert.equal(result.ledger.complete,true);
+      assert.equal(result.parse.rejected,0); assert.equal(result.loss,0);
+      assert.equal(result.complete,result.resourceGaps===0);
       // The fake tracee is the backend itself; signal handling therefore has a
       // real process to settle without invoking any repository test or build.
       fs.writeFileSync(backend, '#!/bin/sh\nwhile [ "$1" != "-o" ]; do shift; done\nshift\nfifo="$1"\ntrap "exit 143" TERM\nprintf "%s 1.000001 execve(\\"/bin/sh\\", [], 0x0) = 0\\n" "$$" > "$fifo"\nwhile :; do :; done\n', {mode:0o700});
