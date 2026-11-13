@@ -8,4 +8,5 @@ layers:
     status: approved
     pr: 65
   design:
-    status: draft
+    status: in_review
+    pr: 70
