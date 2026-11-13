@@ -55,14 +55,25 @@ const roles = (role: RoleAssignment['role']): RoleAssignment[] => [
   { id: 'grant', memberId: 'member', role, scope: { orgId: 'org' } },
 ];
 describe('TC-SF5-IDENTITY-005 complete 14-role permission matrix', () => {
-  it('checks every role/permission positive and negative pair with explicit object conditions', () => {
+  it('covers all 14 roles and every approved permission without dropping matrix pairs', () => {
     expect(ROLES).toHaveLength(14);
-    for (const role of ROLES)
-      for (const [permission, granted] of Object.entries(expectedMatrix))
-        expect(
-          decidePermission({ ...context, permission }, member, roles(role), defaultRules('org'), facts).allowed,
-          `${role}/${permission}`,
-        ).toBe((granted as readonly string[]).includes(role));
+    expect(Object.keys(expectedMatrix).sort()).toEqual(Object.keys(PERMISSIONS).sort());
+    expect(Object.keys(expectedMatrix)).toHaveLength(34);
+  });
+  // Each independent matrix pair retains the default timeout and full production rule validation.
+  // A single aggregate test made all 476 decisions share one timeout under concurrent CI load.
+  it.each(
+    ROLES.flatMap((role) =>
+      Object.entries(expectedMatrix).map(([permission, granted]) => ({
+        role,
+        permission,
+        allowed: granted.includes(role),
+      })),
+    ),
+  )('$role / $permission => $allowed with explicit object conditions', ({ role, permission, allowed }) => {
+    expect(decidePermission({ ...context, permission }, member, roles(role), defaultRules('org'), facts).allowed).toBe(
+      allowed,
+    );
   });
   it('TC-SF5-IDENTITY-004 inherits applicable scoped union but rejects different organization', () => {
     expect(
