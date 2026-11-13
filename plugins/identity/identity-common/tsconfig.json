@@ -7,7 +7,7 @@
     "types": ["node"],
     "customConditions": ["@fasrun/source"]
   },
-  "include": ["src/**/*.ts", "vitest.config.ts"],
+  "include": ["src/**/*.ts", "vitest.config.ts", "src/roles.json"],
   "references": [
     {
       "path": "../../../packages/contracts-core"

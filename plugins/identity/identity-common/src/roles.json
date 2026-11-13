@@ -1,0 +1,16 @@
+{
+  "platform_admin": true,
+  "platform_auditor": true,
+  "organization_admin": true,
+  "budget_admin": true,
+  "security_admin": true,
+  "environment_admin": true,
+  "operations": true,
+  "team_lead": true,
+  "member": true,
+  "observer": true,
+  "requirements_reviewer": true,
+  "design_reviewer": true,
+  "merge_approver": true,
+  "machine_owner": true
+}
