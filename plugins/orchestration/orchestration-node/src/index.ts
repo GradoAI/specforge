@@ -71,6 +71,8 @@ export interface StepDefinition {
   readonly name: string;
   readonly implementationVersion: string;
   readonly kind: 'system' | 'agent';
+  /** Schema version is independent of the implementation release. */
+  readonly outputSchemaVersion: string;
   readonly input: z.ZodType<JsonValue>;
   readonly output: z.ZodType<JsonValue>;
   readonly permissions: readonly string[];
