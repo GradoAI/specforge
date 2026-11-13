@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
-import { afterEach, expect, inject, it } from 'vitest';
+import { afterEach, expect, inject, it, vi } from 'vitest';
 import { MIGRATION_LOCK_KEY, type MigrationReport } from '@fasrun/backend-defaults';
 import {
   createTestDatabase,
@@ -36,34 +36,159 @@ async function connect(url: string) {
   return client;
 }
 afterEach(async () => {
+  await Promise.all([...processes].map((process) => process.stop()));
   await Promise.all(clients.splice(0).map((client) => client.end()));
   await Promise.all(databases.splice(0).map((database) => database.drop()));
   await Promise.all(directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
 });
-function cli(root: string, databaseUrl: string, json = true) {
-  return new Promise<{ code: number | null; stdout: string; stderr: string }>((resolve, reject) => {
-    const child = spawn(process.execPath, [BIN, 'migrate', '--root', root, ...(json ? ['--json'] : [])], {
+type CliResult = {
+  code: number | null;
+  signal: string | null;
+  stdout: string;
+  stderr: string;
+  timedOut: boolean;
+  error: string | null;
+};
+const processes = new Set<ReturnType<typeof startCli>>();
+function startCli(root: string, databaseUrl: string, json = true, imports: string[] = []) {
+  const started = performance.now();
+  const child = spawn(
+    process.execPath,
+    [...imports.flatMap((file) => ['--import', file]), BIN, 'migrate', '--root', root, ...(json ? ['--json'] : [])],
+    {
       env: { ...process.env, FASRUN_MIGRATE_DATABASE_URL: databaseUrl },
       stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    let stdout = '';
-    let stderr = '';
-    child.stdout.on('data', (chunk: Buffer) => {
-      stdout += chunk.toString();
-    });
-    child.stderr.on('data', (chunk: Buffer) => {
-      stderr += chunk.toString();
-    });
-    const timer = setTimeout(() => {
-      child.kill();
-      reject(new Error('Migration process timed out'));
-    }, 45_000);
-    child.on('error', reject);
-    child.on('close', (code) => {
+    },
+  );
+  let closed = false;
+  const state: CliResult = { code: null, signal: null, stdout: '', stderr: '', timedOut: false, error: null };
+  // Retain bounded output; redact before producing diagnostics, never serialize a raw error/environment.
+  child.stdout.on('data', (chunk: Buffer) => {
+    state.stdout = (state.stdout + chunk.toString()).slice(0, 65536);
+  });
+  child.stderr.on('data', (chunk: Buffer) => {
+    state.stderr = (state.stderr + chunk.toString()).slice(0, 65536);
+  });
+  child.on('error', (error: NodeJS.ErrnoException) => {
+    state.error = /^[A-Z0-9_]+$/.test(error.code ?? '') ? error.code! : 'PROCESS_ERROR';
+  });
+  const timer = setTimeout(() => {
+    state.timedOut = true;
+    child.kill('SIGKILL');
+  }, 45_000);
+  const done = new Promise<CliResult>((resolve) => {
+    child.on('close', (code, signal) => {
+      closed = true;
+      state.code = code;
+      state.signal = signal;
       clearTimeout(timer);
-      resolve({ code, stdout, stderr });
+      processes.delete(handle);
+      resolve({ ...state });
     });
   });
+  function summary() {
+    const redact = (text: string) => {
+      for (const secret of [databaseUrl, root, ROOT, BIN, ...imports])
+        if (secret) text = text.split(secret).join('[redacted]');
+      return text
+        .replace(/(?:postgres(?:ql)?|https?):\/\/[^\s"'<>]+/gi, '[url]')
+        .replace(/(?:[A-Za-z]:)?\/[^\s"'<>]+/g, '[path]')
+        .slice(-2048);
+    };
+    return {
+      code: state.code,
+      signal: state.signal,
+      closed,
+      timedOut: state.timedOut,
+      error: state.error,
+      elapsedMs: Math.round(performance.now() - started),
+      stdout: redact(state.stdout),
+      stderr: redact(state.stderr),
+    };
+  }
+  const handle = {
+    done,
+    summary,
+    stop: async () => {
+      if (!closed) child.kill('SIGKILL');
+      await done;
+    },
+  };
+  processes.add(handle);
+  return handle;
+}
+async function cli(root: string, databaseUrl: string, json = true) {
+  const process = startCli(root, databaseUrl, json);
+  const result = await process.done;
+  if (result.timedOut || result.error) throw new Error(`Migration child failed: ${JSON.stringify(process.summary())}`);
+  return result;
+}
+
+function assertCleanTermination(result: CliResult) {
+  expect(result.timedOut).toBe(false);
+  expect(result.error).toBeNull();
+}
+
+async function waitingLocks(owner: pg.Client) {
+  const locks = await owner.query<{ count: string }>(
+    "select count(*) from pg_locks where database = (select oid from pg_database where datname = current_database()) and locktype = 'advisory' and classid = 0 and objid = $1 and objsubid = 1 and not granted",
+    [MIGRATION_LOCK_KEY],
+  );
+  return Number(locks.rows[0]?.count);
+}
+
+async function concurrentMigration(
+  owner: pg.Client,
+  root: string,
+  databaseUrl: string,
+  imports: string[][] = [[], []],
+) {
+  const started = performance.now();
+  const children: ReturnType<typeof startCli>[] = [];
+  let waiting = 0;
+  let attempts = 0;
+  let stage = 'parent-lock';
+  let failure = false;
+  let results: CliResult[] = [];
+  try {
+    await owner.query('select pg_advisory_lock($1)', [MIGRATION_LOCK_KEY]);
+    children.push(startCli(root, databaseUrl, true, imports[0]), startCli(root, databaseUrl, true, imports[1]));
+    stage = 'observe-waiters';
+    for (; attempts < 200; attempts++) {
+      waiting = await waitingLocks(owner);
+      if (children.some((child) => child.summary().closed)) throw new Error('early-exit');
+      if (waiting === 2) break;
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    expect(waiting).toBe(2);
+    stage = 'release-parent-lock';
+    await owner.query('select pg_advisory_unlock($1)', [MIGRATION_LOCK_KEY]);
+    stage = 'child-results';
+    results = await Promise.all(children.map((child) => child.done));
+    expect(results.map((result) => result.code)).toEqual([0, 0]);
+    results.forEach(assertCleanTermination);
+    expect(results.map((result) => envelope(result.stdout).result.plugins[0]!.migrations.length).sort()).toEqual([
+      0, 1,
+    ]);
+    stage = 'single-application';
+    expect((await owner.query('select * from fixture.once')).rows).toEqual([{ id: 1 }]);
+  } catch {
+    failure = true;
+  } finally {
+    // Terminate failed children before unlocking: a failed observation must not race fixture teardown.
+    if (failure) await Promise.all(children.map((child) => child.stop()));
+    try {
+      await owner.query('select pg_advisory_unlock($1)', [MIGRATION_LOCK_KEY]);
+    } catch {
+      failure = true;
+    }
+    await Promise.all(children.map((child) => child.stop()));
+  }
+  if (failure)
+    throw new Error(
+      `TC-PLATFORM-025 failed: ${JSON.stringify({ stage, waiting, attempts, elapsedMs: Math.round(performance.now() - started), children: children.map((child) => child.summary()) })}`,
+    );
+  return results;
 }
 
 it('TC-PLATFORM-024 real identity migrations run once, grant business tables and protect migration metadata', async () => {
@@ -138,28 +263,106 @@ it('TC-PLATFORM-025 two CLI processes wait for one advisory lock and apply a mig
     },
   ]);
   const owner = await connect(database.ownerUrl);
-  await owner.query('select pg_advisory_lock($1)', [MIGRATION_LOCK_KEY]);
-  const first = cli(root, database.ownerUrl);
-  const second = cli(root, database.ownerUrl);
+  // A real waiter in another database must not contaminate this fixture's two-process observation.
+  const foreign = await fixture();
+  const foreignOwner = await connect(foreign.database.ownerUrl);
+  const foreignWaiter = await connect(foreign.database.ownerUrl);
+  await foreignOwner.query('select pg_advisory_lock($1)', [MIGRATION_LOCK_KEY]);
+  const foreignPending = foreignWaiter.query('select pg_advisory_lock($1)', [MIGRATION_LOCK_KEY]);
   try {
-    let waiting = 0;
+    let foreignWaiting = 0;
     for (let attempt = 0; attempt < 200; attempt++) {
-      const locks = await owner.query<{ count: string }>(
-        "select count(*) from pg_locks where locktype = 'advisory' and objid = $1 and not granted",
-        [MIGRATION_LOCK_KEY],
-      );
-      waiting = Number(locks.rows[0]?.count);
-      if (waiting === 2) break;
+      foreignWaiting = await waitingLocks(foreignOwner);
+      if (foreignWaiting === 1) break;
       await new Promise((resolve) => setTimeout(resolve, 25));
     }
-    expect(waiting).toBe(2);
+    expect(foreignWaiting).toBe(1);
+    await concurrentMigration(owner, root, database.ownerUrl);
+    expect(await waitingLocks(foreignOwner)).toBe(1);
   } finally {
-    await owner.query('select pg_advisory_unlock($1)', [MIGRATION_LOCK_KEY]);
+    await foreignOwner.query('select pg_advisory_unlock($1)', [MIGRATION_LOCK_KEY]);
+    await foreignPending;
+    await foreignWaiter.query('select pg_advisory_unlock($1)', [MIGRATION_LOCK_KEY]);
   }
-  const results = await Promise.all([first, second]);
-  expect(results.map((result) => result.code)).toEqual([0, 0]);
-  expect(results.map((result) => envelope(result.stdout).result.plugins[0]!.migrations.length).sort()).toEqual([0, 1]);
-  expect((await owner.query('select * from fixture.once')).rows).toEqual([{ id: 1 }]);
+});
+
+it('TC-PLATFORM-025 early child exit fails with bounded redacted diagnostics and reaps both children', async () => {
+  const { database, root } = await fixture();
+  await writeMigrationFixture(root, [
+    { schema: 'fixture', sql: ['create table fixture.once (id int); insert into fixture.once values (1);'] },
+  ]);
+  const injected = join(root, 'early-exit.mjs');
+  await writeFile(
+    injected,
+    "process.stderr.write(process.env.FASRUN_MIGRATE_DATABASE_URL + '\\n' + import.meta.url); process.exit(17);",
+  );
+  const owner = await connect(database.ownerUrl);
+  let diagnostic = '';
+  try {
+    await concurrentMigration(owner, root, database.ownerUrl, [[injected], []]);
+  } catch (error) {
+    diagnostic = error instanceof Error ? error.message : '';
+  }
+  expect(diagnostic).toContain('observe-waiters');
+  expect(diagnostic).toContain('"code":17');
+  expect(diagnostic).toContain('[redacted]');
+  expect(diagnostic).not.toContain(database.ownerUrl);
+  expect(diagnostic).not.toContain(root);
+  expect(diagnostic.length).toBeLessThan(10000);
+  expect(processes.size).toBe(0);
+  // A separate session proves release; advisory locks are reentrant within their original session.
+  const verifier = await connect(database.ownerUrl);
+  const available = (
+    await verifier.query<{ available: boolean }>('select pg_try_advisory_lock($1) as available', [MIGRATION_LOCK_KEY])
+  ).rows[0]!.available;
+  try {
+    expect(available).toBe(true);
+  } finally {
+    if (available) await verifier.query('select pg_advisory_unlock($1)', [MIGRATION_LOCK_KEY]);
+  }
+});
+it('TC-PLATFORM-025 observation deadline fails and closes delayed real CLI processes before fixture cleanup', async () => {
+  const { database, root } = await fixture();
+  const injected = join(root, 'delayed-import.mjs');
+  await writeFile(injected, 'await new Promise(() => { setInterval(() => {}, 1000); });');
+  const owner = await connect(database.ownerUrl);
+  await expect(concurrentMigration(owner, root, database.ownerUrl, [[injected], [injected]])).rejects.toThrow(
+    '"attempts":200',
+  );
+  expect(processes.size).toBe(0);
+  // A separate session proves release; advisory locks are reentrant within their original session.
+  const verifier = await connect(database.ownerUrl);
+  const available = (
+    await verifier.query<{ available: boolean }>('select pg_try_advisory_lock($1) as available', [MIGRATION_LOCK_KEY])
+  ).rows[0]!.available;
+  try {
+    expect(available).toBe(true);
+  } finally {
+    if (available) await verifier.query('select pg_advisory_unlock($1)', [MIGRATION_LOCK_KEY]);
+  }
+});
+it('TC-PLATFORM-025 the unchanged 45-second watchdog kills and awaits a real child before settling', async () => {
+  const { database, root } = await fixture();
+  const injected = join(root, 'delayed-import.mjs');
+  await writeFile(injected, 'await new Promise(() => { setInterval(() => {}, 1000); });');
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  const child = startCli(root, database.ownerUrl, true, [injected]);
+  try {
+    vi.advanceTimersByTime(44_999);
+    expect(child.summary().timedOut).toBe(false);
+    vi.advanceTimersByTime(1);
+    const result = await child.done;
+    expect(result.timedOut).toBe(true);
+    // A timeout/error racing with an exit code of zero must still fail the success contract.
+    expect(() => assertCleanTermination({ ...result, code: 0 })).toThrow();
+    expect(() => assertCleanTermination({ ...result, code: 0, timedOut: false, error: 'EPIPE' })).toThrow();
+    expect(result.signal).toBe('SIGKILL');
+    expect(child.summary().closed).toBe(true);
+    expect(processes.size).toBe(0);
+  } finally {
+    vi.useRealTimers();
+    await child.stop();
+  }
 });
 
 it('TC-PLATFORM-026 failure rolls back its transaction, preserves completed plugins and skips later plugins and base data', async () => {
