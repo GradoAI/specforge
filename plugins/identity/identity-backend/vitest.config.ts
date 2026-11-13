@@ -2,6 +2,12 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
+    coverage: {
+      enabled: true,
+      provider: 'v8',
+      include: ['src/application/identity.ts', 'src/infrastructure/auth/keycloak.ts'],
+      thresholds: { lines: 80, branches: 90 },
+    },
     projects: [
       { test: { name: 'unit', include: ['src/**/*.test.ts'], exclude: ['src/**/*.int.test.ts'] } },
       {

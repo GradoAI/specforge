@@ -17,6 +17,9 @@
     },
     {
       "path": "../identity-common"
+    },
+    {
+      "path": "../../governance/governance-common"
     }
   ]
 }

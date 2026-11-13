@@ -1,3 +1,4 @@
+import { testPool, closeTestPools } from '../test-pools.js';
 // T011: real PostgreSQL, T009 roles, and committed migrations. This setup is not the T012 migration runner.
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -6,7 +7,7 @@ import { newId } from '@fasrun/contracts-core';
 import { createTestDatabase, type TestDatabase } from '@fasrun/test-utils';
 import { eq, sql } from 'drizzle-orm';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import pg from 'pg';
+import type pg from 'pg';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { organization } from './organization.js';
 
@@ -22,7 +23,7 @@ describe('identity.organization (R-platform-007, D-7)', () => {
   let scoped: ReturnType<typeof organizationDatabase>;
   beforeAll(async () => {
     database = await createTestDatabase(inject('fasrunPostgres'));
-    owner = new pg.Pool({ connectionString: database.ownerUrl });
+    owner = testPool({ connectionString: database.ownerUrl });
     // Only a test fixture: T012 will provide production migration orchestration and grants.
     const journal = JSON.parse(readFileSync(`${migrations}/meta/_journal.json`, 'utf8')) as {
       entries: { tag: string }[];
@@ -35,14 +36,16 @@ describe('identity.organization (R-platform-007, D-7)', () => {
       [orgA, orgB],
     );
     // A single connection proves reuse after both commit and rollback cannot carry an organization over.
-    app = new pg.Pool({ connectionString: database.appUrl, max: 1 });
+    app = testPool({ connectionString: database.appUrl, max: 1 });
     db = drizzle(app);
     scoped = organizationDatabase({ db });
   });
   afterAll(async () => {
-    await app?.end();
-    await owner?.end();
-    await database?.drop();
+    try {
+      await closeTestPools(app, owner);
+    } finally {
+      await database?.drop();
+    }
   });
 
   it('TC-PLATFORM-022 rejects a wrong id prefix specifically with ck_organization_id', async () => {
@@ -152,7 +155,7 @@ describe('identity.organization (R-platform-007, D-7)', () => {
   });
 
   it('keeps concurrent organization transactions isolated', async () => {
-    const pool = new pg.Pool({ connectionString: database?.appUrl, max: 2 });
+    const pool = testPool({ connectionString: database?.appUrl, max: 2 });
     const concurrent = organizationDatabase({ db: drizzle(pool) });
     try {
       const results = await Promise.all(
@@ -165,7 +168,7 @@ describe('identity.organization (R-platform-007, D-7)', () => {
       );
       expect(results).toEqual([[orgA], [orgB]]);
     } finally {
-      await pool.end();
+      await closeTestPools(pool);
     }
   });
 

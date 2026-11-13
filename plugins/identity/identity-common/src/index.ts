@@ -7,3 +7,4 @@ export interface IdentityStatus {
   status: 'ok';
 }
 export * from './control-plane.js';
+export * from './identity.js';

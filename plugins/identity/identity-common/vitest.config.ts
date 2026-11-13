@@ -1,0 +1,4 @@
+import { defineConfig } from 'vitest/config';
+export default defineConfig({
+  test: { coverage: { enabled: true, provider: 'v8', include: ['src/identity.ts'], thresholds: { branches: 90 } } },
+});

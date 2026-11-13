@@ -20,6 +20,18 @@
     },
     {
       "path": "../../../packages/contracts-core"
+    },
+    {
+      "path": "../../governance/governance-common"
+    },
+    {
+      "path": "../identity-common"
+    },
+    {
+      "path": "../identity-node"
+    },
+    {
+      "path": "../../governance/governance-node"
     }
   ]
 }
