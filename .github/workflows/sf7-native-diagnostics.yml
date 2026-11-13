@@ -1,0 +1,62 @@
+# SF-7 D-3/D-4, T001; #64. Manual evidence only, never a required check.
+name: SF-7 native diagnostics
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+        working-directory: target
+    steps:
+      - name: Read the merged facility
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: facility
+          persist-credentials: false
+      - name: Isolate observer from the fixed source tree
+        working-directory: facility
+        env:
+          FACILITY_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/main
+          test "$(git rev-parse HEAD)" = "$FACILITY_SHA"
+          mkdir -m 700 "$RUNNER_TEMP/sf7-observer"
+          cp tools/scripts/src/fixtures/cli-build-lifecycle/diagnostics/{collect,analyze}.mjs "$RUNNER_TEMP/sf7-observer/"
+      - name: Checkout the original failed source, never current main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: b59b9f4b588d4aa819baa071fec8b902692fa884
+          path: target
+          persist-credentials: false
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          package_json_file: target/package.json
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        id: node
+        with:
+          node-version: 24.22.2
+          cache: pnpm
+          cache-dependency-path: target/pnpm-lock.yaml
+      - name: Verify fixed input before installation
+        run: node "$RUNNER_TEMP/sf7-observer/collect.mjs" verify
+      - run: pnpm install --frozen-lockfile
+      - name: Preflight and one original full concurrent test entry
+        env:
+          SF7_FACILITY_SHA: ${{ github.sha }}
+          SF7_CACHE_HIT: ${{ steps.node.outputs.cache-hit }}
+        run: node "$RUNNER_TEMP/sf7-observer/collect.mjs" collect
+      - name: Preserve only bounded sanitized evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sf7-native-evidence
+          path: ${{ runner.temp }}/sf7-evidence/
+          retention-days: 7
+          if-no-files-found: warn
