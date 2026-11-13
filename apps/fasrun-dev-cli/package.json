@@ -15,7 +15,7 @@
   ],
   "scripts": {
     "build": "tsdown src/index.ts src/help.ts --format esm --platform node",
-    "test": "tsdown src/index.ts src/help.ts --format esm --platform node && vitest run"
+    "test": "vitest run"
   },
   "oclif": {
     "bin": "fasrun",
