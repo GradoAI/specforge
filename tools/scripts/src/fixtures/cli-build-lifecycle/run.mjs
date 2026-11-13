@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { processScope } from './processes.mjs';
 import { fileURLToPath } from 'node:url';
 import { setTimeout } from 'node:timers/promises';
 import { parse, stringify } from 'yaml';
@@ -13,61 +13,49 @@ const cliName = '@fasrun/fasrun-dev-cli';
 const migrationName = '@fasrun/migration-check';
 const helper = 'tools/scripts/src/fixtures/cli-build-lifecycle';
 const control = path.join(root, '.lifecycle');
-const active = new Set();
-const totalTimer = globalThis.setTimeout(() => {
-  for (const child of active) killGroup(child.pid);
-  fs.rmSync(root, { recursive: true, force: true });
-  console.error('lifecycle total deadline exceeded (220s)');
-  process.exit(124);
-}, 220000);
 const environment = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('TURBO_')));
 environment.TURBO_TELEMETRY_DISABLED = '1';
+const processes = processScope({ env: environment, redact: [root, source, os.homedir()] });
 const hostShims = new Map();
-function killGroup(pid) {
-  if (pid === undefined) return;
-  try {
-    process.kill(-pid, 'SIGKILL');
-  } catch {
-    /* already exited */
-  }
+let fatalStatus;
+let stage = 'setup';
+const started = Date.now();
+function cancel(status, message) {
+  fatalStatus ??= status;
+  console.error(`${message}; stage=${stage}, elapsed=${Date.now() - started}ms`);
+  processes.cancel(new Error(message));
 }
-process.once('SIGTERM', () => {
-  for (const child of active) killGroup(child.pid);
-  fs.rmSync(root, { recursive: true, force: true });
-  process.exit(143);
-});
+const totalTimer = globalThis.setTimeout(() => cancel(124, 'lifecycle total deadline exceeded (220s)'), 220000);
+const onTerminate = () => cancel(143, 'lifecycle received SIGTERM');
+process.once('SIGTERM', onTerminate);
 async function run(cmd, args, cwd = root) {
   if (cmd === 'pnpm' && args.includes('turbo') && !args.includes('--force') && !args.includes('--cache=local:rw'))
     args = [...args, '--cache=local:rw'];
+  stage = `${cmd === process.execPath ? 'node' : cmd} ${args.join(' ')}`;
   const start = Date.now();
-  let stdout = '';
-  let stderr = '';
-  const child = spawn(cmd, args, { cwd, detached: true, env: environment, stdio: ['ignore', 'pipe', 'pipe'] });
-  active.add(child);
-  child.stdout.on('data', (data) => {
-    stdout += data;
-  });
-  child.stderr.on('data', (data) => {
-    stderr += data;
-  });
+  const handle = processes.start(cmd, args, cwd);
   let timedOut = false;
   const timer = globalThis.setTimeout(() => {
     timedOut = true;
-    killGroup(child.pid);
+    handle.stop();
   }, 60000);
   try {
-    const status = await new Promise((resolve, reject) => {
-      child.on('error', reject);
-      child.on('close', resolve);
-    });
-    assert.equal(timedOut, false, `60s deadline: ${cmd} ${args.join(' ')}\n${stdout}${stderr}`);
-    assert.equal(status, 0, stdout + stderr);
-    console.log(`${cmd} ${args.join(' ')}: ${Date.now() - start}ms`);
-    return stdout;
+    const result = await handle.done;
+    const evidence = handle.evidence(result);
+    console.log(`${stage}: ${Date.now() - start}ms; exit=${result.code}, signal=${result.signal ?? 'none'}`);
+    if (fatalStatus || timedOut || result.code !== 0 || result.spawnError || result.killError || result.outputLimit)
+      console.error(evidence);
+    processes.check();
+    assert.equal(result.killError, undefined, evidence);
+    assert.equal(result.outputLimit, false, evidence);
+    assert.equal(timedOut, false, `60s deadline: ${stage}\n${evidence}`);
+    assert.equal(result.spawnError, undefined, evidence);
+    assert.equal(result.code, 0, evidence);
+    return handle.output();
   } finally {
     clearTimeout(timer);
-    killGroup(child.pid);
-    active.delete(child);
+    handle.stop();
+    await handle.done;
   }
 }
 function json(file) {
@@ -104,49 +92,49 @@ function turbo(extra = []) {
   ];
 }
 async function experiment(extra, observe) {
+  stage = `barrier ${extra.join(' ')}`;
   const start = Date.now();
-  let output = '';
-  const child = spawn('pnpm', turbo(extra), {
-    cwd: root,
-    detached: true,
-    env: environment,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-  active.add(child);
-  child.stdout.on('data', (s) => {
-    output += s;
-  });
-  child.stderr.on('data', (s) => {
-    output += s;
-  });
-  const finished = new Promise((resolve, reject) => {
-    child.on('error', reject);
-    child.on('close', (code) => resolve(code));
-  });
+  const handle = processes.start('pnpm', turbo(extra), root);
   const deadline = Date.now() + 45000;
+  let timer;
+  let result;
+  let timedOut = false;
   try {
-    while (!fs.existsSync(`${control}/cleaned`)) {
-      assert.ok(Date.now() < deadline && child.exitCode === null, output || 'clean barrier timed out');
-      await setTimeout(20);
-    }
-    await observe();
+    return await processes.using(handle, async () => {
+      while (!fs.existsSync(`${control}/cleaned`)) {
+        processes.check();
+        assert.ok(
+          Date.now() < deadline && handle.child.exitCode === null && handle.child.signalCode === null,
+          processes.safe(handle.output()) || 'clean barrier timed out',
+        );
+        await setTimeout(20);
+      }
+      await observe();
+      processes.check();
+      fs.writeFileSync(`${control}/release`, '');
+      timer = globalThis.setTimeout(() => {
+        timedOut = true;
+        handle.stop();
+      }, 30000);
+      result = await handle.done;
+      processes.check();
+      assert.equal(timedOut, false, `30s completion deadline: ${handle.evidence(result)}`);
+      assert.equal(result.killError, undefined, handle.evidence(result));
+      assert.equal(result.outputLimit, false, handle.evidence(result));
+      assert.equal(result.spawnError, undefined, handle.evidence(result));
+      return { status: result.code, output: handle.evidence(result) };
+    });
   } finally {
-    fs.writeFileSync(`${control}/release`, '');
+    clearTimeout(timer);
+    // An observation assertion can throw before the normal completion path.
+    // Always reap before any caller resets/removes the control directory.
+    if (fs.existsSync(control)) fs.writeFileSync(`${control}/release`, '');
+    handle.stop();
+    result = await handle.done;
+    console.log(`${stage}: ${Date.now() - start}ms; ${events().join(',')}; ${handle.evidence(result)}`);
   }
-  const timer = globalThis.setTimeout(() => {
-    try {
-      process.kill(-child.pid, 'SIGKILL');
-    } catch {
-      /* already exited */
-    }
-  }, 30000);
-  const status = await finished;
-  clearTimeout(timer);
-  killGroup(child.pid);
-  active.delete(child);
-  console.log(`barrier ${extra.join(' ')}: status=${status}, ${Date.now() - start}ms; ${events().join(',')}`);
-  return { status, output };
 }
+
 try {
   // Validate the repository's real DAG before replacing database consumers with probes.
   const dag = JSON.parse(await run('pnpm', [...turbo(['--dry=json'])], source));
@@ -267,14 +255,24 @@ try {
   for (const [name, version] of Object.entries(cli.dependencies)) {
     if (version.startsWith('workspace:')) runtimeLevel(name);
   }
-  for (let level = 0; level <= Math.max(...levels.values()); level++) {
-    const names = [...levels]
-      .filter(([, depth]) => depth === level)
-      .map(([name]) => name)
-      .sort();
-    console.log(`snapshot preparation level ${level}: ${names.join(', ')}`);
-    await run('pnpm', ['exec', 'turbo', 'run', 'build', ...names.map((name) => `--filter=${name}`)]);
+  // Let one real Turbo DAG schedule the complete runtime closure. Separate
+  // level invocations re-traverse ^build ancestors and repeatedly hash/cache them.
+  const upstreamNames = [...levels.keys()].sort();
+  const buildArgs = ['exec', 'turbo', 'run', 'build', ...upstreamNames.map((name) => `--filter=${name}`)];
+  const preparationDag = JSON.parse(await run('pnpm', [...buildArgs, '--dry=json']));
+  assert.deepEqual(
+    preparationDag.tasks.map((item) => item.taskId).sort(),
+    upstreamNames.map((name) => `${name}#build`),
+  );
+  for (const item of preparationDag.tasks) {
+    assert.equal(
+      item.command,
+      byName.get(item.package).manifest.scripts.build,
+      `${item.taskId} original build command`,
+    );
   }
+  console.log(`snapshot preparation: one real DAG, ${upstreamNames.join(', ')}`);
+  await run('pnpm', buildArgs);
   const upstream = [...levels.keys()].sort().map((name) => byName.get(name));
   function snapshot() {
     const entries = [];
@@ -317,6 +315,24 @@ try {
   // Cold CLI: no CLI output or CLI cache, with the verified upstream snapshots.
   await run('pnpm', turbo());
   ordered();
+  // Only seed later failure/legacy preconditions from this real successful build.
+  // Every actual lifecycle scenario still invokes the real build/cache machinery.
+  const seedDir = path.join(root, '.lifecycle-seed');
+  const cliDist = path.join(root, 'apps/fasrun-dev-cli/dist');
+  fs.cpSync(cliDist, seedDir, { recursive: true });
+  function artifactHashes(dir) {
+    return fs
+      .readdirSync(dir, { recursive: true })
+      .sort()
+      .filter((file) => fs.statSync(path.join(dir, file)).isFile())
+      .map((file) => [
+        file,
+        createHash('sha256')
+          .update(fs.readFileSync(path.join(dir, file)))
+          .digest('hex'),
+      ]);
+  }
+  const seedHashes = artifactHashes(seedDir);
   reset();
   fs.writeFileSync(`${control}/pause`, '');
   const forced = await experiment(['--force'], async () => {
@@ -356,7 +372,10 @@ try {
     if (mode.length) assert.ok(events().includes('independent:done'), failed.output);
     // Seed a real previous artifact for the next failure/legacy scenario.
     reset();
-    await run('pnpm', ['exec', 'turbo', 'run', 'build', `--filter=${cliName}`, '--force']);
+    fs.rmSync(cliDist, { recursive: true, force: true });
+    fs.cpSync(seedDir, cliDist, { recursive: true });
+    assert.deepEqual(artifactHashes(cliDist), seedHashes, 'real previous artifact seed changed');
+    console.log('seed: restored verified prior real CLI build for next failure/legacy precondition');
   }
   // Original two-producer test plus missing self edge: the sibling consumes during clean.
   reset();
@@ -389,16 +408,23 @@ try {
   assert.deepEqual(snapshot(), upstreamSnapshot, 'read-only upstream artifact snapshot changed');
   console.log('snapshot: all upstream artifact hashes unchanged');
   console.log('lifecycle: all scenarios passed');
+} catch (error) {
+  console.error(`lifecycle failure: stage=${stage}; ${processes.safe(error.stack ?? error)}`);
+  process.exitCode = fatalStatus ?? 1;
 } finally {
   clearTimeout(totalTimer);
-  for (const child of active) {
-    try {
-      process.kill(-child.pid, 'SIGKILL');
-    } catch {
-      /* exited */
-    }
+  process.removeListener('SIGTERM', onTerminate);
+  try {
+    await processes.stopAll();
+    assert.equal(processes.size(), 0, 'subprocesses must close before fixture removal');
+    fs.rmSync(root, { recursive: true, force: true });
+    for (const [file, before] of hostShims)
+      assert.ok(fs.readFileSync(file, 'utf8') === before, `host shim changed: ${path.relative(source, file)}`);
+    console.log(
+      `cleanup: direct children closed and process groups signalled before fixture removal; total=${Date.now() - started}ms`,
+    );
+  } catch (error) {
+    console.error(`lifecycle cleanup failure: ${processes.safe(error.stack ?? error)}`);
+    process.exitCode ||= 1;
   }
-  fs.rmSync(root, { recursive: true, force: true });
-  for (const [file, before] of hostShims)
-    assert.equal(fs.readFileSync(file, 'utf8'), before, `host shim changed: ${file}`);
 }
