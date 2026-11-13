@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { setTimeout } from 'node:timers/promises';
+import { parse, stringify } from 'yaml';
 const source = fileURLToPath(new URL('../../../../../', import.meta.url));
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'fasrun-lifecycle-'));
 const cliName = '@fasrun/fasrun-dev-cli';
@@ -48,12 +50,17 @@ async function run(cmd, args, cwd = root) {
   child.stderr.on('data', (data) => {
     stderr += data;
   });
-  const timer = globalThis.setTimeout(() => killGroup(child.pid), 60000);
+  let timedOut = false;
+  const timer = globalThis.setTimeout(() => {
+    timedOut = true;
+    killGroup(child.pid);
+  }, 60000);
   try {
     const status = await new Promise((resolve, reject) => {
       child.on('error', reject);
       child.on('close', resolve);
     });
+    assert.equal(timedOut, false, `60s deadline: ${cmd} ${args.join(' ')}\n${stdout}${stderr}`);
     assert.equal(status, 0, stdout + stderr);
     console.log(`${cmd} ${args.join(' ')}: ${Date.now() - start}ms`);
     return stdout;
@@ -156,6 +163,13 @@ try {
   }
   // Include this fixture during development as well as after git staging.
   fs.cpSync(path.join(source, helper), path.join(root, helper), { recursive: true });
+  // Dependencies are mapped from a frozen installation below. Probe manifest edits
+  // must never trigger pnpm to install into these read-only dependency links.
+  const workspaceFile = path.join(root, 'pnpm-workspace.yaml');
+  const workspace = parse(fs.readFileSync(workspaceFile, 'utf8'));
+  workspace.verifyDepsBeforeRun = false;
+  fs.writeFileSync(workspaceFile, stringify(workspace));
+  assert.equal((await run('pnpm', ['config', 'get', 'verifyDepsBeforeRun'])).trim(), 'false');
   const packages = tracked
     .filter((file) => file.endsWith('package.json') && !file.includes('/fixtures/') && !file.startsWith('.'))
     .map((file) => ({
@@ -229,9 +243,78 @@ try {
   for (const [name, version] of Object.entries(cli.dependencies)) {
     if (version.startsWith('workspace:')) assert.ok(probeDag.tasks.some((item) => item.taskId === `${name}#build`));
   }
+  // Produce verified upstream snapshots inside this copy, never from host dist
+  // which may be cleaned by another task. Each topological level runs in parallel
+  // through real Turbo with the original package build commands. Preparation is
+  // bounded independently from the CLI lifecycle; no product task is serialized.
+  const byName = new Map(packages.map((item) => [item.manifest.name, item]));
+  const levels = new Map();
+  const visiting = new Set();
+  function runtimeLevel(name) {
+    if (levels.has(name)) return levels.get(name);
+    assert.ok(!visiting.has(name), `cyclic runtime dependency: ${name}`);
+    visiting.add(name);
+    const item = byName.get(name);
+    assert.ok(item, `missing workspace package: ${name}`);
+    const dependencies = Object.entries({ ...item.manifest.dependencies, ...item.manifest.optionalDependencies })
+      .filter(([, version]) => version.startsWith('workspace:'))
+      .map(([dependency]) => dependency);
+    const level = dependencies.length ? 1 + Math.max(...dependencies.map(runtimeLevel)) : 0;
+    visiting.delete(name);
+    levels.set(name, level);
+    return level;
+  }
+  for (const [name, version] of Object.entries(cli.dependencies)) {
+    if (version.startsWith('workspace:')) runtimeLevel(name);
+  }
+  for (let level = 0; level <= Math.max(...levels.values()); level++) {
+    const names = [...levels]
+      .filter(([, depth]) => depth === level)
+      .map(([name]) => name)
+      .sort();
+    console.log(`snapshot preparation level ${level}: ${names.join(', ')}`);
+    await run('pnpm', ['exec', 'turbo', 'run', 'build', ...names.map((name) => `--filter=${name}`)]);
+  }
+  const upstream = [...levels.keys()].sort().map((name) => byName.get(name));
+  function snapshot() {
+    const entries = [];
+    function collect(dir) {
+      for (const name of fs.readdirSync(path.join(root, dir)).sort()) {
+        const file = path.join(dir, name);
+        if (fs.statSync(path.join(root, file)).isDirectory()) collect(file);
+        else
+          entries.push([
+            file,
+            createHash('sha256')
+              .update(fs.readFileSync(path.join(root, file)))
+              .digest('hex'),
+          ]);
+      }
+    }
+    for (const item of upstream) {
+      assert.ok(
+        fs.existsSync(path.join(root, item.dir, 'dist/index.mjs')),
+        `${item.manifest.name} build output missing`,
+      );
+      collect(path.join(item.dir, 'dist'));
+    }
+    return entries;
+  }
+  const upstreamSnapshot = snapshot();
+  console.log(
+    `snapshot: ${upstream.length} packages, ${upstreamSnapshot.length} files, SHA256 ${createHash('sha256').update(JSON.stringify(upstreamSnapshot)).digest('hex')}`,
+  );
+  for (const item of upstream) {
+    const manifest = json(`${item.dir}/package.json`);
+    delete manifest.scripts.build;
+    write(`${item.dir}/package.json`, manifest);
+  }
+  // Read-only prebuilt upstream artifacts are allowed by D-3. Force below means
+  // the real CLI producer, not another full rebuild of the upstream snapshots.
+  assert.ok(!fs.existsSync(path.join(root, 'apps/fasrun-dev-cli/dist')));
   const fixedConfig = structuredClone(config);
   const fixedCli = structuredClone(cli);
-  // Cold: no outputs yet. Force cases retain real runtime-upstream build scripts.
+  // Cold CLI: no CLI output or CLI cache, with the verified upstream snapshots.
   await run('pnpm', turbo());
   ordered();
   reset();
@@ -303,6 +386,8 @@ try {
   reset();
   await run('pnpm', turbo(['--force']));
   ordered();
+  assert.deepEqual(snapshot(), upstreamSnapshot, 'read-only upstream artifact snapshot changed');
+  console.log('snapshot: all upstream artifact hashes unchanged');
   console.log('lifecycle: all scenarios passed');
 } finally {
   clearTimeout(totalTimer);
