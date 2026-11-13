@@ -137,11 +137,116 @@ async function waitingLocks(owner: pg.Client) {
   return Number(locks.rows[0]?.count);
 }
 
+const CLI_NAMES = ['tc025-cli-first', 'tc025-cli-second'];
+function namedDatabaseUrl(databaseUrl: string, name: string) {
+  const url = new URL(databaseUrl);
+  url.searchParams.set('application_name', name);
+  return url.toString();
+}
+type DatabaseSnapshot =
+  | { status: 'unavailable' }
+  | {
+      status: 'available';
+      children: {
+        child: number;
+        sessions: {
+          state: string;
+          waitType: string | null;
+          waitEvent: string | null;
+          targetLock: 'waiting' | 'granted' | 'not-observed';
+          connectionAgeMs: number | null;
+          queryAgeMs: number | null;
+        }[];
+      }[];
+    };
+async function migrationSnapshot(
+  databaseUrl: string,
+  beforeRead?: (observer: pg.Client) => Promise<void>,
+): Promise<DatabaseSnapshot> {
+  // A separate bounded observer cannot leave the lock-owning test connection with an active/failed query.
+  const observer = new pg.Client({
+    connectionString: databaseUrl,
+    application_name: 'tc025-observer',
+    connectionTimeoutMillis: 500,
+    statement_timeout: 500,
+    query_timeout: 750,
+  });
+  let failed = false;
+  let snapshot: DatabaseSnapshot = { status: 'unavailable' };
+  observer.on('error', () => {
+    failed = true;
+  });
+  try {
+    await observer.connect();
+    await beforeRead?.(observer);
+    const result = await observer.query<{
+      application_name: string;
+      state: string;
+      wait_event_type: string | null;
+      wait_event: string | null;
+      waiting: boolean;
+      granted: boolean;
+      connection_age_ms: number | null;
+      query_age_ms: number | null;
+    }>(
+      `select a.application_name, a.state, a.wait_event_type, a.wait_event,
+        extract(epoch from clock_timestamp()-a.backend_start)*1000 as connection_age_ms,
+        extract(epoch from clock_timestamp()-a.query_start)*1000 as query_age_ms,
+        exists(select 1 from pg_locks l where l.pid=a.pid and l.database=a.datid and l.locktype='advisory' and l.classid=0 and l.objid=$2 and l.objsubid=1 and not l.granted) as waiting,
+        exists(select 1 from pg_locks l where l.pid=a.pid and l.database=a.datid and l.locktype='advisory' and l.classid=0 and l.objid=$2 and l.objsubid=1 and l.granted) as granted
+        from pg_stat_activity a where a.datid=(select oid from pg_database where datname=current_database()) and a.application_name=any($1::text[])
+        order by a.application_name,a.pid limit 4`,
+      [CLI_NAMES, MIGRATION_LOCK_KEY],
+    );
+    const safeEvent = (value: string | null) =>
+      value === null ? null : /^[A-Za-z_]{1,64}$/.test(value) ? value : 'other';
+    const safeAge = (value: number | null) =>
+      value === null || !Number.isFinite(Number(value))
+        ? null
+        : Math.max(0, Math.min(3600000, Math.round(Number(value))));
+    snapshot = {
+      status: 'available',
+      children: CLI_NAMES.map((name, index) => ({
+        child: index + 1,
+        sessions: result.rows
+          .filter((row) => row.application_name === name)
+          .map((row) => ({
+            state: [
+              'active',
+              'idle',
+              'idle in transaction',
+              'idle in transaction (aborted)',
+              'fastpath function call',
+              'disabled',
+            ].includes(row.state)
+              ? row.state
+              : 'other',
+            waitType: safeEvent(row.wait_event_type),
+            waitEvent: safeEvent(row.wait_event),
+            targetLock: row.waiting ? 'waiting' : row.granted ? 'granted' : 'not-observed',
+            connectionAgeMs: safeAge(row.connection_age_ms),
+            queryAgeMs: safeAge(row.query_age_ms),
+          })),
+      })),
+    };
+  } catch {
+    failed = true;
+  } finally {
+    try {
+      await observer.end();
+    } catch {
+      failed = true;
+    }
+  }
+  return failed ? { status: 'unavailable' } : snapshot;
+}
+
 async function concurrentMigration(
   owner: pg.Client,
   root: string,
   databaseUrl: string,
   imports: string[][] = [[], []],
+  observe: typeof migrationSnapshot = migrationSnapshot,
 ) {
   const started = performance.now();
   const children: ReturnType<typeof startCli>[] = [];
@@ -149,10 +254,15 @@ async function concurrentMigration(
   let attempts = 0;
   let stage = 'parent-lock';
   let failure = false;
+  let database: DatabaseSnapshot | undefined;
+  let diagnosticMs: number | undefined;
   let results: CliResult[] = [];
   try {
     await owner.query('select pg_advisory_lock($1)', [MIGRATION_LOCK_KEY]);
-    children.push(startCli(root, databaseUrl, true, imports[0]), startCli(root, databaseUrl, true, imports[1]));
+    children.push(
+      startCli(root, namedDatabaseUrl(databaseUrl, CLI_NAMES[0]!), true, imports[0]),
+      startCli(root, namedDatabaseUrl(databaseUrl, CLI_NAMES[1]!), true, imports[1]),
+    );
     stage = 'observe-waiters';
     for (; attempts < 200; attempts++) {
       waiting = await waitingLocks(owner);
@@ -174,6 +284,14 @@ async function concurrentMigration(
     expect((await owner.query('select * from fixture.once')).rows).toEqual([{ id: 1 }]);
   } catch {
     failure = true;
+    const diagnosticStarted = performance.now();
+    try {
+      database = await observe(databaseUrl);
+    } catch {
+      database = { status: 'unavailable' };
+    } finally {
+      diagnosticMs = Math.round(performance.now() - diagnosticStarted);
+    }
   } finally {
     // Terminate failed children before unlocking: a failed observation must not race fixture teardown.
     if (failure) await Promise.all(children.map((child) => child.stop()));
@@ -186,7 +304,7 @@ async function concurrentMigration(
   }
   if (failure)
     throw new Error(
-      `TC-PLATFORM-025 failed: ${JSON.stringify({ stage, waiting, attempts, elapsedMs: Math.round(performance.now() - started), children: children.map((child) => child.summary()) })}`,
+      `TC-PLATFORM-025 failed: ${JSON.stringify({ stage, database, diagnosticMs, waiting, attempts, elapsedMs: Math.round(performance.now() - started), children: children.map((child) => child.summary()) })}`,
     );
   return results;
 }
@@ -323,12 +441,30 @@ it('TC-PLATFORM-025 early child exit fails with bounded redacted diagnostics and
 });
 it('TC-PLATFORM-025 observation deadline fails and closes delayed real CLI processes before fixture cleanup', async () => {
   const { database, root } = await fixture();
+  await writeMigrationFixture(root, [
+    { schema: 'fixture', sql: ['create table fixture.once (id int); insert into fixture.once values (1);'] },
+  ]);
   const injected = join(root, 'delayed-import.mjs');
   await writeFile(injected, 'await new Promise(() => { setInterval(() => {}, 1000); });');
   const owner = await connect(database.ownerUrl);
-  await expect(concurrentMigration(owner, root, database.ownerUrl, [[injected], [injected]])).rejects.toThrow(
-    '"attempts":200',
-  );
+  let diagnostic = '';
+  try {
+    await concurrentMigration(owner, root, database.ownerUrl, [[injected], [injected]]);
+  } catch (error) {
+    diagnostic = error instanceof Error ? error.message : '';
+  }
+  expect(diagnostic).toContain('"attempts":200');
+  expect(JSON.parse(diagnostic.slice('TC-PLATFORM-025 failed: '.length)) as unknown).toMatchObject({
+    stage: 'observe-waiters',
+    waiting: 0,
+    database: {
+      status: 'available',
+      children: [
+        { child: 1, sessions: [] },
+        { child: 2, sessions: [] },
+      ],
+    },
+  });
   expect(processes.size).toBe(0);
   // A separate session proves release; advisory locks are reentrant within their original session.
   const verifier = await connect(database.ownerUrl);
@@ -364,6 +500,117 @@ it('TC-PLATFORM-025 the unchanged 45-second watchdog kills and awaits a real chi
     await child.stop();
   }
 });
+
+it('TC-PLATFORM-025 failure snapshots exclude foreign databases and distinguish absent, granted and target-waiting sessions', async () => {
+  const { database } = await fixture();
+  const foreign = await fixture();
+  const owner = await connect(database.ownerUrl);
+  const target = await connect(namedDatabaseUrl(database.ownerUrl, CLI_NAMES[0]!));
+  await connect(namedDatabaseUrl(foreign.database.ownerUrl, CLI_NAMES[1]!));
+  const absent = await migrationSnapshot(database.ownerUrl);
+  expect(absent).toMatchObject({
+    status: 'available',
+    children: [
+      { child: 1, sessions: [{ state: 'idle', targetLock: 'not-observed' }] },
+      { child: 2, sessions: [] },
+    ],
+  });
+  await target.query('select pg_advisory_lock($1)', [MIGRATION_LOCK_KEY]);
+  expect(await migrationSnapshot(database.ownerUrl)).toMatchObject({
+    status: 'available',
+    children: [
+      { child: 1, sessions: [{ targetLock: 'granted' }] },
+      { child: 2, sessions: [] },
+    ],
+  });
+  await target.query('select pg_advisory_unlock($1)', [MIGRATION_LOCK_KEY]);
+  await owner.query('select pg_advisory_lock($1)', [MIGRATION_LOCK_KEY]);
+  const pending = target.query('select pg_advisory_lock($1)', [MIGRATION_LOCK_KEY]);
+  try {
+    let waiting = 0;
+    for (let attempt = 0; attempt < 200; attempt++) {
+      waiting = await waitingLocks(owner);
+      if (waiting === 1) break;
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    expect(waiting).toBe(1);
+    const observed = await migrationSnapshot(database.ownerUrl);
+    expect(observed).toMatchObject({
+      status: 'available',
+      children: [
+        { child: 1, sessions: [{ state: 'active', waitType: 'Lock', targetLock: 'waiting' }] },
+        { child: 2, sessions: [] },
+      ],
+    });
+    const text = JSON.stringify(observed);
+    expect(text).not.toContain(database.ownerUrl);
+    expect(text).not.toContain('select ');
+    expect(text.length).toBeLessThan(2000);
+  } finally {
+    await owner.query('select pg_advisory_unlock($1)', [MIGRATION_LOCK_KEY]);
+    await pending;
+    await target.query('select pg_advisory_unlock($1)', [MIGRATION_LOCK_KEY]);
+  }
+});
+it.each(['rejected', 'deadline'] as const)(
+  'TC-PLATFORM-025 observer %s preserves the original failed stage and still closes both children',
+  async (mode) => {
+    const { database, root } = await fixture();
+    const injected = join(root, 'failed-import.mjs');
+    await writeFile(injected, 'process.exit(17);');
+    const owner = await connect(database.ownerUrl);
+    let diagnostic = '';
+    let observerEnded = false;
+    let deadlineCode = '';
+    let deadlineMs = 0;
+    try {
+      await concurrentMigration(owner, root, database.ownerUrl, [[injected], [injected]], (url) =>
+        migrationSnapshot(url, async (observer) => {
+          observer.on('end', () => {
+            observerEnded = true;
+          });
+          if (mode === 'rejected') throw new Error(database.ownerUrl + root);
+          const started = performance.now();
+          try {
+            await observer.query('select pg_sleep(5)');
+          } catch (error) {
+            deadlineMs = Math.round(performance.now() - started);
+            deadlineCode =
+              (error as { code?: string }).code === '57014'
+                ? '57014'
+                : error instanceof Error && error.message === 'Query read timeout'
+                  ? 'CLIENT_QUERY_TIMEOUT'
+                  : 'OTHER';
+            throw error;
+          }
+        }),
+      );
+    } catch (error) {
+      diagnostic = error instanceof Error ? error.message : '';
+    }
+    expect(diagnostic).toContain('"stage":"observe-waiters"');
+    expect(diagnostic).toContain('"database":{"status":"unavailable"}');
+    expect(diagnostic).not.toContain(database.ownerUrl);
+    expect(diagnostic).not.toContain(root);
+    expect(processes.size).toBe(0);
+    expect(observerEnded).toBe(true);
+    if (mode === 'deadline') {
+      expect(['57014', 'CLIENT_QUERY_TIMEOUT']).toContain(deadlineCode);
+      process.stdout.write(
+        JSON.stringify({ test: 'TC025-observer-deadline', code: deadlineCode, elapsedMs: deadlineMs }) + '\n',
+      );
+    }
+    const verifier = await connect(database.ownerUrl);
+    const available = (
+      await verifier.query<{ available: boolean }>('select pg_try_advisory_lock($1) as available', [MIGRATION_LOCK_KEY])
+    ).rows[0]!.available;
+    try {
+      expect(available).toBe(true);
+    } finally {
+      if (available) await verifier.query('select pg_advisory_unlock($1)', [MIGRATION_LOCK_KEY]);
+    }
+  },
+);
 
 it('TC-PLATFORM-026 failure rolls back its transaction, preserves completed plugins and skips later plugins and base data', async () => {
   const { database, root } = await fixture();
