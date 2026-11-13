@@ -14,6 +14,7 @@ import { ErrorCodes, FasrunError } from '@fasrun/contracts-core';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import type { FastifyPluginAsync } from 'fastify';
 import pg from 'pg';
+import { managePool } from './pool-lifecycle.js';
 
 export interface LogEntry {
   level: 'debug' | 'info' | 'warn' | 'error';
@@ -93,6 +94,7 @@ export const mockServices = {
       deps: {},
       factory: (_deps, { pluginId = '' }): DatabaseService => {
         const pool = new pg.Pool({ connectionString, max: 4 });
+        managePool(pool);
         return { schema: pluginId.replaceAll('-', '_'), db: drizzle(pool) };
       },
     });

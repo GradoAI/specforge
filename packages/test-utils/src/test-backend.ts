@@ -11,6 +11,7 @@ import { ErrorCodes, FasrunError } from '@fasrun/contracts-core';
 import { asValue, createContainer, InjectionMode, type AwilixContainer } from 'awilix';
 import Fastify, { type FastifyInstance } from 'fastify';
 import type pg from 'pg';
+import { cleanupFailure, managePool, type PoolLifecycle } from './pool-lifecycle.js';
 import { httpRouterFactories, mockServices, type CollectedRoutes } from './mock-services.js';
 
 export interface StartTestBackendOptions {
@@ -30,7 +31,7 @@ const isExtensionPoint = (dep: AnyDep): dep is ExtensionPoint<unknown> => dep.$$
 
 export async function startTestBackend(options: StartTestBackendOptions): Promise<TestBackend> {
   const routes = new Map<string, CollectedRoutes>();
-  const pools: pg.Pool[] = [];
+  const pools = new Set<PoolLifecycle>();
   const factories = new Map<string, ServiceFactory>();
   for (const factory of [
     mockServices.rootConfig(),
@@ -74,7 +75,7 @@ export async function startTestBackend(options: StartTestBackendOptions): Promis
       factory: async (deps, context) => {
         const service = await original.factory(deps, context);
         const pool = (service as { db: { $client?: pg.Pool } }).db.$client;
-        if (pool) pools.push(pool);
+        if (pool) pools.add(managePool(pool));
         return service;
       },
     });
@@ -123,12 +124,27 @@ export async function startTestBackend(options: StartTestBackendOptions): Promis
     );
   }
   await server.ready();
+  let stopping: Promise<void> | undefined;
   return {
     server,
-    async stop() {
-      await server.close();
-      await Promise.all(pools.map((pool) => pool.end()));
-      await root.dispose();
+    stop() {
+      stopping ??= (async () => {
+        const failures: Error[] = [];
+        try {
+          await server.close();
+        } catch (error) {
+          failures.push(cleanupFailure('server-close', error));
+        }
+        const results = await Promise.allSettled([...pools].map((pool) => pool.stop()));
+        for (const result of results) if (result.status === 'rejected') failures.push(result.reason as Error);
+        try {
+          await root.dispose();
+        } catch (error) {
+          failures.push(cleanupFailure('container-dispose', error));
+        }
+        if (failures.length) throw new AggregateError(failures, 'Test backend stop failed');
+      })();
+      return stopping;
     },
   };
 }
