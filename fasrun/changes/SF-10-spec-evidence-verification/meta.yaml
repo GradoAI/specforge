@@ -1,0 +1,8 @@
+work: SF-10
+title: 规格变更、交付证据与分阶段验证的边界纠偏
+issue: https://github.com/fasrun/fasrun/issues/95
+size: small
+template_version: 1
+layers:
+  requirements:
+    status: in_review
