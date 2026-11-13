@@ -21,6 +21,7 @@ allowedPaths:
   - prettier.config.js
   - commitlint.config.js
   - CLAUDE.md
+  - AGENTS.md
   - LICENSE
   - CONTRIBUTING.md
   - .squawk.toml
