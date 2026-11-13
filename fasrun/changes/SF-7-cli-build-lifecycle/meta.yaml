@@ -5,5 +5,7 @@ size: large
 template_version: 1
 layers:
   requirements:
-    status: in_review
+    status: approved
     pr: 65
+  design:
+    status: draft
