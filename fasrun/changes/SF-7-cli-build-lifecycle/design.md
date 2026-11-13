@@ -43,6 +43,24 @@ CLI test等待自身build及上游成功。migration-check test继续通过其�
 
 每个屏障、子进程及整组实验有明确截止时间，超时即失败；finally释放屏障、终止残留子进程并清理临时目录。使用有界等待而非无限重试，不放宽现有产品用例超时。记录冷/force/缓存恢复的任务状态、实际CLI结果与输出摘要；缓存恢复必须验证CLI build实际命中，不能把重建成功当作命中。
 
+#### 原生CI单次诊断设施（范围修订，尚未实施）
+
+2026-11-13用户在执行会话明确接受[#64最小设施方案](https://github.com/fasrun/fasrun/issues/64#issuecomment-6850574718)，授权“先仅修订SF-7 D-3/D-4与T001的精确范围”；用户确认不是GitHub批准。现有生命周期实现及历史证据保留；#96/#94出现的六包真实构建60秒截止根因仍为UNPROVEN。此补充只授权后续诊断设施的设计边界，不预报实现或修复结果，不重新决定R-platform-001.S1–S4业务验收。
+
+诊断设施仅由人工workflow_dispatch触发，一次运行无矩阵、循环、自动重试或自动后续触发。不是必需检查，不写#96的check/status，不批准、入队或合并；原CI、保护规则和业务PR保持不变。须先实际人工合入本规格修订，再实施设施；设施代码经对应人工评审且实际合入后，才允许人工发起一次有界取证。预检失败也结束本次运行，不自动再次调度。
+
+**固定输入与隔离。** 目标为失败运行43405544342/attempt1/test131818888492实际checkout `b59b9f4b588d4aa819baa071fec8b902692fa884`，其来源PR HEAD `88e5c18fe1a5bb2acad97a7fe320c020663aa834`、base `101cb1807411eb834e6ce940dbe5324671e1d09a`；目标tree必须为 `ed499ca7e027965a564a0517922d49c74ed18bbe`（已核实与PR HEAD tree相同）。无任意SHA/仓库/命令输入；目标不可取、tree不符即停止，不降级为最新main。另记录设施/工作流提交及工具版本；设施脚本从已合入的设施提交取出，在RUNNER_TEMP执行，不覆盖、补丁修改或加入目标的git ls-files。安装及测试前后核对受控源码与受控文件清单，允许原构建写忽略的产物及原夹具写临时目录，不把“只读”误解释为禁止测试必要输出。
+
+**原入口与预算。** 使用原生x64 ubuntu-24.04 runner、Node24.22.2、目标packageManager与冻结锁安装；沿用原固定版本Actions。根命令仍为`pnpm test`，不加filter/force/concurrency或改变缓存策略；六包原build命令、真实DTS、全套断言及原失败停止行为均保留。现有六包为backend-defaults、backend-plugin-api、cli-templates、contracts-core、plugin-spec-common、test-utils；启动前验证闭包与原命令而非以这份名单替代真实图。保留job20分钟、单命令60秒、夹具总220秒、屏障45秒、完成30秒、wrapper240秒、Vitest245秒及其余既有截止，不用诊断设施延长被测过程。采集的准备/收尾也在同一job预算内。只做无执行dry解析，不预热构建。
+
+**预检与完整退出证据。** 采集器须在测试启动前通过短合成进程探针，证实能识别进程启动、PID复用、exec/父子及进程组关系、正常/非零/信号退出，特别是SIGKILL和短命子进程；仅Node exit回调或/proc轮询不足以宣称完整。系统级进程/等待/信号跟踪可配合200ms的/proc及系统/cgroup采样；具体后端在实现时记录版本与权限，不临时安装未审核工具，不放宽runner或仓库权限。后端不可用、权限不足、退出事件不完整或无法安全采集时，预检非零结束且不得启动pnpm test。工具能力未交付，不能把本条规范写成已有检查能力。
+
+**证据语义。** 使用单调时钟和UTC对齐任务图、调度/依赖等待、exec/exit、CPU、RSS、I/O/压力、内存事件及进程组收束；按PID+启动时刻识别进程。保留原全仓并发背景及六包实际路径，区分未启动、取消、超时和未观察到结束；完整关键路径必须有对应图和事件支持。记录采集自身CPU、采样频率、时间精度、丢失事件及探针开销，短进程资源取不到时标明界限，不编造RSS或CPU。原测试退出码与取证完整性分别报告，原非零不被吞掉；测试通过但采集失败/缺事件仍为取证不完整，不能写根因已修复。
+
+**安全与收束。** 权限仅contents:read，checkout不持久化凭据；不读额外secret、不发布外部check/status、不改保护。仅收集允许字段，不导出完整环境、认证信息、请求正文或任意文件内容；路径及可能含密钥的参数先脱敏，原始敏感数据不上传。诊断产物有总量上限64MiB和7天保留期；达到上限停止追加采集并显式记缺失，不能把截断当完整，不通过杀死被测过程改变原预算。正常/失败/取消路径先收束采样和跟踪进程，保留原fixture finally及先收束后删目录顺序；不得抢先删除目标资源。硬中止无法保存的证据如实记缺失，不承诺任意逃逸进程组的daemon回收。
+
+记录runner image/内核/架构、CPU型号/配额、内存、Node/pnpm/Turbo/tsdown/TS、cache key与hit、checkout/tree和设施SHA。runner image不可重建、manual与pull_request事件差异、探针开销均单列；不得将诊断成功作为#96原attempt成功或门禁替代。本次有效执行结束即回传#64；根因未证明不提出猜测性修复，不重复本机实验或运行求绿。仅在证据定位具体原因后按原归属提出最小修法。
+
 ### D-4 影响范围与交付证据
 对应需求：R-platform-001
 
@@ -57,8 +75,12 @@ CLI test等待自身build及上游成功。migration-check test继续通过其�
 | `tools/scripts/src/cli-build-lifecycle.test.ts` | 实际任务图、隔离真实构建/CLI及缓存/失败回归 |
 | `tools/scripts/src/fixtures/cli-build-lifecycle/` | 仅测试所需屏障与探针；不放产品命令替身 |
 | `.changeset/` | 仅在实际包变更按仓库既有检查需要时说明；不借此改版本策略 |
+| `.github/workflows/sf7-native-diagnostics.yml` | 仅人工单次诊断入口；固定目标、只读权限、原入口/预算、预检及脱敏产物保存；不成为required check |
+| `tools/scripts/src/fixtures/cli-build-lifecycle/diagnostics/collect.mjs` | RUNNER_TEMP内预检、外部进程/资源采集、上限与收束；不改目标源码 |
+| `tools/scripts/src/fixtures/cli-build-lifecycle/diagnostics/analyze.mjs` | 归并图、任务时序/关键路径与CPU/RSS/调度/退出；不完整明确失败 |
+| `tools/scripts/src/fixtures/cli-build-lifecycle/diagnostics/diagnostics.test.ts` | 短合成进程、拒绝边界、固定输入/命令/预算、脱敏/丢样/收束自测 |
 
-不修改根package.json、pnpm锁/依赖版本、migration-check产品/prepare、CI工作流或保护规则；使用仓库已安装工具，不新增依赖。若实现发现必须增加路径，先说明实际证据并按既有范围流程处理，不能以本表扩大至整个tools或apps。任务层另明确规格进度/交付记录的范围，设计层不提前定义任务编号。
+除上述唯一人工诊断工作流外，不修改现有CI/nightly工作流、根package.json、pnpm锁/依赖版本、migration-check产品/prepare或保护规则；使用已安装工具，不新增依赖。诊断设施增量仅限新增的四个精确文件，不据原T001历史路径重新修改已交付CLI/Turbo/夹具逻辑。若实现发现必须增加路径，先说明实际证据并按既有范围流程处理，不能以本表扩大至整个tools或apps。任务层另明确规格进度/交付记录的范围，设计层不提前定义任务编号。
 
 | 场景 | 设计覆盖 | 后续验证 |
 | --- | --- | --- |
@@ -66,6 +88,8 @@ CLI test等待自身build及上游成功。migration-check test继续通过其�
 | R-platform-001.S2 | D-4 | pnpm安装脚本/依赖配置不变，保留现有安装安全回归 |
 | R-platform-001.S3 | D-1/D-2/D-3 | 实际图单生产者；两消费者；冷/force/cache；原缺陷失效检查；构建失败不启动后继 |
 | R-platform-001.S4 | D-2/D-3 | 文档推荐包级命令从无产物通过，直接入口的成功构建前置可执行 |
+
+原生诊断仅扩展R-platform-001.S3的故障证据手段，D-3/D-4→T001→TC-SF7-DIAG-001–004；原S1–S4及全部旧用例不变。确认来源及方案见D-3，设施/一次人工取证的实际结果后续集中关联#64，不在本规格中预记成功。
 
 保留所有原CLI与迁移测试，不将生命周期无容器探针冒充完整迁移检查。测试命名及用例编号由任务层分配，已有TC-PLATFORM-001/002与其他编号不重排。验证记录区分本地标准入口、显式Colima变量的替代入口、PR CI、实际merge_group及main；没有发生的队列/主干运行记为待核验，不用重跑成功覆盖历史失败。#17的Colima环境问题及其他限制继续保留。
 
