@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { jsonValueSchema, type JsonValue } from '@fasrun/contracts-core';
 
+class UnionBranchMismatch extends Error {}
+
 const MAX_PATHS = 128;
 const pointer = (name: string) => name.replaceAll('~', '~0').replaceAll('/', '~1').slice(0, 128);
 /** Project against the actual registered Zod branches before full validation. Audit paths contain no values. */
@@ -21,13 +23,18 @@ export function sanitizeOutput(schema: z.ZodType, input: unknown) {
     if (node instanceof z.ZodUnion) {
       for (const option of node.options as readonly z.ZodType[]) {
         const branch: string[] = [];
-        const projected = project(option, candidate, prefix, branch, depth + 1);
-        if (option.safeParse(projected).success) {
-          paths.push(...branch.slice(0, MAX_PATHS - paths.length));
-          return projected;
+        try {
+          const projected = project(option, candidate, prefix, branch, depth + 1);
+          if (option.safeParse(projected).success) {
+            paths.push(...branch.slice(0, MAX_PATHS - paths.length));
+            return projected;
+          }
+        } catch (error) {
+          // A nested branch mismatch rejects only this option. Structural safety errors remain fatal.
+          if (!(error instanceof UnionBranchMismatch)) throw error;
         }
       }
-      throw new Error('Output does not match a declared union branch');
+      throw new UnionBranchMismatch('Output does not match a declared union branch');
     }
     if (node instanceof z.ZodArray && Array.isArray(candidate))
       return candidate.map((item, index) =>

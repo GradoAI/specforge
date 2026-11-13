@@ -26,6 +26,20 @@ it('TC-SF5-SPEC-013 validates independently projected union branches', () => {
   });
   expect(() => sanitizeOutput(s, { kind: 'd', d: 4 })).toThrow('union branch');
 });
+it('TC-SF5-SPEC-013 tries later branches after a nested union mismatch without leaking rejected audit paths', () => {
+  const schema = z.union([
+    z.strictObject({
+      payload: z.union([z.strictObject({ question: z.string() }), z.strictObject({ count: z.number() })]),
+    }),
+    z.strictObject({ title: z.string(), payload: z.strictObject({ draft: z.string() }) }),
+  ]);
+  expect(sanitizeOutput(schema, { title: 'spec', payload: { draft: 'text', steps: [] }, gates: [] })).toEqual({
+    output: { title: 'spec', payload: { draft: 'text' } },
+    stripped: ['output/payload/steps', 'output/gates'],
+  });
+  expect(() => sanitizeOutput(schema, { title: 'spec', payload: { draft: 42 } })).toThrow('union branch');
+  expect(() => sanitizeOutput(z.union([z.tuple([z.string()]), z.array(z.string())]), ['x'])).toThrow('Unsupported');
+});
 it('TC-SF5-SPEC-013 retains optional nullable defaults and strict type validation', () => {
   const s = z.strictObject({
     x: z.strictObject({ a: z.string() }).nullable().optional(),
