@@ -29,7 +29,7 @@ async function fixture() {
   }
   return { root, files };
 }
-async function snapshot(root: string): Promise<Record<string, string>> {
+async function snapshot(root: string, binary = false): Promise<Record<string, string>> {
   const result: Record<string, string> = {};
   async function walk(path: string) {
     for (const item of await fs.readdir(join(root, path), { withFileTypes: true })) {
@@ -37,7 +37,8 @@ async function snapshot(root: string): Promise<Record<string, string>> {
       if (item.isDirectory()) {
         result[`${file}/`] = '';
         await walk(file);
-      } else result[file] = await fs.readFile(join(root, file), 'utf8');
+      } else if (item.isSymbolicLink()) result[file] = `symlink:${await fs.readlink(join(root, file))}`;
+      else result[file] = (await fs.readFile(join(root, file))).toString(binary ? 'base64' : 'utf8');
     }
   }
   await walk('');
@@ -130,4 +131,201 @@ it('TC-SPEC-014 temporary write failure leaves the source tree intact', async ()
   vi.spyOn(fs, 'writeFile').mockRejectedValueOnce(new Error('Injected write failure'));
   await expect(runSpecArchive(join(root, 'changes/demo'), '2026-11-12')).rejects.toThrow('Injected');
   expect(await snapshot(root)).toEqual(before);
+});
+
+// These are trusted port fixtures, not identity/Keycloak integration evidence.
+async function controlled() {
+  const { root, files } = await fixture();
+  const repository = await fs.realpath(await fs.mkdtemp(join(tmpdir(), 'fasrun-archive-repo-')));
+  dirs.push(repository);
+  await fs.rename(root, join(repository, 'fasrun'));
+  const context = {
+    actor: {
+      version: 1 as const,
+      actorId: 'member',
+      actorKind: 'member' as const,
+      orgId: 'org',
+      clientId: 'control',
+      source: 'internal' as const,
+      traceId: 'trace',
+      authorizationId: 'auth',
+    },
+    permission: 'spec.write',
+    scope: { orgId: 'org', projectId: 'project' },
+    object: { type: 'repository', id: 'repository' },
+  };
+  const authority = {
+    resolveContext: vi.fn<ArchiveAuthority['resolveContext']>(() => Promise.resolve(structuredClone(context))),
+    authorize: vi.fn<ArchiveAuthority['authorize']>((actor, _operation, operationDigest) =>
+      Promise.resolve({ authorizationId: 'auth', context: actor, operationDigest }),
+    ),
+  } satisfies ArchiveAuthority;
+  const facade = createAuthorizedSpecArchiver({
+    repositoryId: 'repository',
+    repositoryRoot: repository,
+    specRoot: 'fasrun',
+    authority,
+  });
+  return { root: join(repository, 'fasrun'), repository, files, context, authority, facade };
+}
+import { createAuthorizedSpecArchiver } from './spec-archive.js';
+import type { ArchiveAuthority } from '@fasrun/plugin-spec-common';
+
+it('TC-SF5-SPEC-009 controlled M1 facade uses the real writer with exact attachment bytes and only authorized actions', async () => {
+  const f = await controlled();
+  await fs.writeFile(join(f.root, 'changes/demo/attachment.bin'), Buffer.from([0, 255, 128, 1]));
+  await fs.mkdir(join(f.root, 'changes/demo/empty'));
+  const operation = await f.facade.prepare('changes/demo', '2026-11-12');
+  expect(operation.inputs).toContainEqual({ kind: 'file', path: 'changes/demo/attachment.bin', bytes: 'AP+AAQ==' });
+  expect(Object.keys(f.facade)).toEqual(['prepare', 'execute']);
+  expect(await f.facade.execute(operation)).toMatchObject({ updated: ['specs/demo/spec.md'] });
+  expect(await fs.readFile(join(f.root, 'changes/archive/2026-11-12-demo/attachment.bin'))).toEqual(
+    Buffer.from([0, 255, 128, 1]),
+  );
+  expect((await fs.stat(join(f.root, 'changes/archive/2026-11-12-demo/empty'))).isDirectory()).toBe(true);
+  expect((await snapshot(f.root))['specs/demo/spec.md']).toContain('Modified');
+});
+
+it.each([
+  'content',
+  'extra-write',
+  'missing-write',
+  'extra-move',
+  'move-target',
+  'move-source',
+  'date',
+  'repository',
+  'root',
+  'change',
+  'snapshot',
+] as const)('TC-SF5-SPEC-009 rejects %s request tampering without any write or temporary residue', async (kind) => {
+  const f = await controlled();
+  const operation = await f.facade.prepare('changes/demo', '2026-11-12');
+  const before = await snapshot(f.root, true);
+  const write = operation.actions.find((a) => a.kind === 'write')!;
+  const move = operation.actions.find((a) => a.kind === 'move')!;
+  if (kind === 'content') write.text += '\nUnauthorised additional text';
+  if (kind === 'extra-write') operation.actions.push({ ...write });
+  if (kind === 'missing-write') operation.actions = operation.actions.filter((a) => a.kind !== 'write');
+  if (kind === 'extra-move') operation.actions.push({ ...move });
+  if (kind === 'move-target') move.to = 'changes/archive/other';
+  if (kind === 'move-source') move.from = 'changes/other';
+  if (kind === 'date') operation.binding.date = '2026-11-13';
+  if (kind === 'repository') operation.binding.repositoryId = 'other';
+  if (kind === 'root') operation.binding.specRoot = 'other';
+  if (kind === 'change') operation.binding.change = 'changes/other';
+  if (kind === 'snapshot') operation.inputs = operation.inputs.slice(1);
+  await expect(f.facade.execute(operation)).rejects.toThrow();
+  expect(await snapshot(f.root, true)).toEqual(before);
+});
+
+it.each(['markdown', 'attachment', 'binary', 'directory'] as const)(
+  'TC-SF5-SPEC-009 refuses a stale %s snapshot before staging',
+  async (kind) => {
+    const f = await controlled();
+    await fs.writeFile(join(f.root, 'changes/demo/binary.bin'), Buffer.from([255]));
+    const op = await f.facade.prepare('changes/demo', '2026-11-12');
+    if (kind === 'markdown') await fs.appendFile(join(f.root, 'specs/demo/spec.md'), '\nChanged');
+    if (kind === 'attachment') await fs.appendFile(join(f.root, 'changes/demo/notes.txt'), 'changed');
+    if (kind === 'binary') await fs.writeFile(join(f.root, 'changes/demo/binary.bin'), Buffer.from([254]));
+    if (kind === 'directory') await fs.mkdir(join(f.root, 'changes/demo/new-empty'));
+    const before = await snapshot(f.root, true);
+    await expect(f.facade.execute(op)).rejects.toThrow();
+    expect(await snapshot(f.root, true)).toEqual(before);
+  },
+);
+
+it.each(['missing', 'boolean', 'digest', 'actor', 'authorization', 'revoked', 'system', 'read-denied'] as const)(
+  'TC-SF5-SPEC-009 refuses %s authority and never falls back to M0',
+  async (kind) => {
+    const f = await controlled();
+    const op = await f.facade.prepare('changes/demo', '2026-11-12');
+    const before = await snapshot(f.root, true);
+    if (kind === 'missing') vi.mocked(f.authority.authorize).mockResolvedValue(undefined);
+    if (kind === 'boolean') vi.mocked(f.authority.authorize).mockResolvedValue(true as never);
+    if (kind === 'digest')
+      vi.mocked(f.authority.authorize).mockImplementation((ctx) =>
+        Promise.resolve({ authorizationId: 'auth', context: ctx, operationDigest: '0'.repeat(64) }),
+      );
+    if (kind === 'actor')
+      vi.mocked(f.authority.authorize).mockImplementation((ctx, _op, hash) =>
+        Promise.resolve({
+          authorizationId: 'auth',
+          context: { ...ctx, actor: { ...ctx.actor, actorId: 'other' } },
+          operationDigest: hash,
+        }),
+      );
+    if (kind === 'authorization')
+      vi.mocked(f.authority.authorize).mockImplementation((ctx, _op, hash) =>
+        Promise.resolve({ authorizationId: 'other', context: ctx, operationDigest: hash }),
+      );
+    if (kind === 'revoked') vi.mocked(f.authority.authorize).mockRejectedValue(new Error('Revoked'));
+    if (kind === 'system')
+      vi.mocked(f.authority.resolveContext).mockResolvedValue({
+        ...f.context,
+        actor: { ...f.context.actor, actorKind: 'system' },
+      } as never);
+    if (kind === 'read-denied') vi.mocked(f.authority.resolveContext).mockRejectedValue(new Error('Read denied'));
+    await expect(f.facade.execute(op)).rejects.toThrow();
+    expect(await snapshot(f.root, true)).toEqual(before);
+    if (kind === 'read-denied') {
+      const spy = vi.spyOn(fs, 'readFile');
+      await expect(f.facade.prepare('changes/demo', '2026-11-12')).rejects.toThrow('read authorization denied');
+      expect(spy).not.toHaveBeenCalled();
+    }
+  },
+);
+
+it('TC-SF5-SPEC-009 checks the snapshot again after awaiting current authorization', async () => {
+  const f = await controlled();
+  const op = await f.facade.prepare('changes/demo', '2026-11-12');
+  vi.mocked(f.authority.authorize).mockImplementation(async (context, _op, operationDigest) => {
+    await fs.appendFile(join(f.root, 'changes/demo/notes.txt'), 'external edit');
+    return { authorizationId: 'auth', context, operationDigest };
+  });
+  await expect(f.facade.execute(op)).rejects.toThrow('inputs changed');
+  const tree = await snapshot(f.root);
+  expect(tree['changes/demo/notes.txt']).toContain('external edit');
+  expect(tree['specs/demo/spec.md']).toEqual(f.files['specs/demo/spec.md']);
+  expect(Object.keys(tree).some((p) => p.startsWith('.archive-'))).toBe(false);
+});
+
+it.each(['write', 'rename-1', 'rename-2', 'rename-3'] as const)(
+  'TC-SF5-SPEC-009 real controlled writer rolls back %s failure',
+  async (kind) => {
+    const f = await controlled();
+    const op = await f.facade.prepare('changes/demo', '2026-11-12');
+    const before = await snapshot(f.root, true);
+    if (kind === 'write') vi.spyOn(fs, 'writeFile').mockRejectedValueOnce(new Error('Injected write failure'));
+    else {
+      const original = fs.rename;
+      let count = 0;
+      vi.spyOn(fs, 'rename').mockImplementation(async (from, to) => {
+        if (++count === Number(kind.slice(-1))) throw new Error('Injected rename failure');
+        return original(from, to);
+      });
+    }
+    await expect(f.facade.execute(op)).rejects.toThrow('Injected');
+    expect(await snapshot(f.root, true)).toEqual(before);
+  },
+);
+
+it('TC-SF5-SPEC-009 retains original conflict, existing-target and symlink preflight', async () => {
+  const f = await controlled();
+  const op = await f.facade.prepare('changes/demo', '2026-11-12');
+  await fs.mkdir(join(f.root, 'changes/archive/2026-11-12-demo'), { recursive: true });
+  const before = await snapshot(f.root, true);
+  await expect(f.facade.execute(op)).rejects.toThrow('Archive exists');
+  expect(await snapshot(f.root, true)).toEqual(before);
+  await fs.rm(join(f.root, 'changes/archive'), { recursive: true });
+  await fs.symlink(join(f.root, 'specs/demo/spec.md'), join(f.root, 'symlink.md'));
+  await expect(f.facade.execute(op)).rejects.toThrow('Symlink');
+  await fs.unlink(join(f.root, 'symlink.md'));
+  await fs.writeFile(
+    join(f.root, 'changes/demo/specs/demo/spec.md'),
+    `## ADDED Requirements\n${entry(1, 'Duplicate')}`,
+  );
+  const conflicting = await snapshot(f.root, true);
+  await expect(f.facade.execute(op)).rejects.toThrow();
+  expect(await snapshot(f.root, true)).toEqual(conflicting);
 });

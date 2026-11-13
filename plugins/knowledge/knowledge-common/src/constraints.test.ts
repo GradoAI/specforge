@@ -74,7 +74,7 @@ describe('TC-SF5-SPEC-008 inherited constraints', () => {
       ),
     ).toThrow('mandatory rule');
   });
-  it('matches bounded globs and preserves protected historical files for ordinary writes', () => {
+  it('TC-SF5-SPEC-009 matches bounded globs and rejects ordinary writes to protected historical files', () => {
     for (const [pattern, path, expected] of [
       ['**/spec.md', 'spec.md', true],
       ['**/spec.md', 'a/b/spec.md', true],
