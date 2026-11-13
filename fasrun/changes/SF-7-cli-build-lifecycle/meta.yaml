@@ -11,4 +11,5 @@ layers:
     status: approved
     pr: 70
   tasks:
-    status: draft
+    status: in_review
+    pr: 74
