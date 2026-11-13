@@ -44,3 +44,5 @@ export interface ConnectStateService {
   credential(context: OperationContext, integrationId: string): Promise<CredentialEnvelope>;
 }
 export const connectStateServiceRef = createServiceRef<ConnectStateService>({ id: 'connect.state', scope: 'root' });
+
+export type { ActionClaim, ReconcilePosition, ConnectActionState, GitHubRepositoryRoute } from './actions.js';
