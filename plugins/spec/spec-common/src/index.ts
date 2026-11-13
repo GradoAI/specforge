@@ -12,3 +12,4 @@ export * from './archive.js';
 
 export * from './config/index.js';
 export * from './control-plane.js';
+export * from './archive-authorization/index.js';
