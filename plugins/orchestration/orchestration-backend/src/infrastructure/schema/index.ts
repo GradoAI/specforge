@@ -78,3 +78,35 @@ export const outbox = orchestrationSchema
     ],
   )
   .enableRLS();
+
+export const agentCall = orchestrationSchema
+  .table(
+    'agent_call',
+    {
+      ...standard(),
+      callId: text('call_id').notNull(),
+      workId: text('work_id').notNull(),
+      stepRunId: text('step_run_id').notNull(),
+      attempt: integer('attempt').notNull(),
+      requestHash: text('request_hash').notNull(),
+      state: text('state').notNull(),
+      deadline: timestamp('deadline', { withTimezone: true }).notNull(),
+      record: jsonb('record').notNull(),
+    },
+    (t) => [
+      primaryKey({ name: 'pk_agent_call', columns: [t.id] }),
+      check('ck_agent_call_id', idCheck(t.id, 'acl')),
+      check('ck_agent_call_org', idCheck(t.orgId, 'org')),
+      check('ck_agent_call_version', sql`${t.version} > 0`),
+      check('ck_agent_call_attempt', sql`${t.attempt} > 0`),
+      check('ck_agent_call_state', sql`${t.state} in ('pending','success','failed','cancelled')`),
+      check('ck_agent_call_hash', sql`${t.requestHash} ~ '^[a-f0-9]{64}$'`),
+      uniqueIndex('ix_agent_call_org_call_attempt').on(t.orgId, t.callId, t.attempt),
+      index('ix_agent_call_org_created_id').on(t.orgId, t.createdAt, t.id),
+      pgPolicy('agent_call_org_isolation', {
+        using: sql`${t.orgId} = current_setting('fasrun.org_id',true)`,
+        withCheck: sql`${t.orgId} = current_setting('fasrun.org_id',true)`,
+      }),
+    ],
+  )
+  .enableRLS();
