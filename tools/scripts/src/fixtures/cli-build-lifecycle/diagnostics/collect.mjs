@@ -508,7 +508,9 @@ async function main() {
       memoryBytes: os.totalmem(),
       image: /^\d{8}\.\d+\.\d+$/.test(process.env.ImageVersion ?? '') ? process.env.ImageVersion : null,
       cacheHit: ['true', 'false'].includes(process.env.SF7_CACHE_HIT) ? process.env.SF7_CACHE_HIT : 'unknown',
-      cacheKey: `node-cache-Linux-x64-pnpm-${createHash('sha256').update(fs.readFileSync('pnpm-lock.yaml')).digest('hex')}`,
+      cacheKey: `node-cache-Linux-x64-pnpm-${createHash('sha256')
+        .update(createHash('sha256').update(fs.readFileSync('pnpm-lock.yaml')).digest())
+        .digest('hex')}`,
       cacheKeyMeaning: 'Expected setup-node pnpm key; action log is authoritative for actual key/hit.',
       differences: [
         'workflow_dispatch rather than pull_request',
