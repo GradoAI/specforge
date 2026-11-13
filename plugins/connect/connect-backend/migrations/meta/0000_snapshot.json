@@ -1,0 +1,1411 @@
+{
+  "id": "176efeb1-ef7a-42e5-ba90-9e5bdadb1c81",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "connect.consumer_receipt": {
+      "name": "consumer_receipt",
+      "schema": "connect",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "event_id": {
+          "name": "event_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "consumer": {
+          "name": "consumer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ix_consumer_receipt_identity": {
+          "name": "ix_consumer_receipt_identity",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "consumer",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_consumer_receipt": {
+          "name": "pk_consumer_receipt",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "consumer_receipt_org_isolation": {
+          "name": "consumer_receipt_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"connect\".\"consumer_receipt\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"connect\".\"consumer_receipt\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_consumer_receipt_id": {
+          "name": "ck_consumer_receipt_id",
+          "value": "\"connect\".\"consumer_receipt\".\"id\" ~ '^rcp_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_consumer_receipt_org": {
+          "name": "ck_consumer_receipt_org",
+          "value": "\"connect\".\"consumer_receipt\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_consumer_receipt_version": {
+          "name": "ck_consumer_receipt_version",
+          "value": "\"connect\".\"consumer_receipt\".\"version\" > 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "connect.credential_envelope": {
+      "name": "credential_envelope",
+      "schema": "connect",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "integration_id": {
+          "name": "integration_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credential_version": {
+          "name": "credential_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "envelope": {
+          "name": "envelope",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active": {
+          "name": "active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ix_credential_envelope_identity": {
+          "name": "ix_credential_envelope_identity",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "integration_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "credential_version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ix_credential_envelope_active": {
+          "name": "ix_credential_envelope_active",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "integration_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"connect\".\"credential_envelope\".\"active\"",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_credential_envelope": {
+          "name": "pk_credential_envelope",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "credential_envelope_org_isolation": {
+          "name": "credential_envelope_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"connect\".\"credential_envelope\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"connect\".\"credential_envelope\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_credential_envelope_id": {
+          "name": "ck_credential_envelope_id",
+          "value": "\"connect\".\"credential_envelope\".\"id\" ~ '^cre_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_credential_envelope_org": {
+          "name": "ck_credential_envelope_org",
+          "value": "\"connect\".\"credential_envelope\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_credential_envelope_version": {
+          "name": "ck_credential_envelope_version",
+          "value": "\"connect\".\"credential_envelope\".\"version\" > 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "connect.discussion": {
+      "name": "discussion",
+      "schema": "connect",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "integration_id": {
+          "name": "integration_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "external_id": {
+          "name": "external_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "repository_id": {
+          "name": "repository_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ix_discussion_identity": {
+          "name": "ix_discussion_identity",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "integration_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "external_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_discussion": {
+          "name": "pk_discussion",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "discussion_org_isolation": {
+          "name": "discussion_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"connect\".\"discussion\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"connect\".\"discussion\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_discussion_id": {
+          "name": "ck_discussion_id",
+          "value": "\"connect\".\"discussion\".\"id\" ~ '^dsc_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_discussion_org": {
+          "name": "ck_discussion_org",
+          "value": "\"connect\".\"discussion\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_discussion_version": {
+          "name": "ck_discussion_version",
+          "value": "\"connect\".\"discussion\".\"version\" > 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "connect.external_object": {
+      "name": "external_object",
+      "schema": "connect",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "integration_id": {
+          "name": "integration_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "repository_id": {
+          "name": "repository_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "external_id": {
+          "name": "external_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observed_at": {
+          "name": "observed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "digest": {
+          "name": "digest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ix_external_object_identity": {
+          "name": "ix_external_object_identity",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "integration_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "external_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_external_object": {
+          "name": "pk_external_object",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "external_object_org_isolation": {
+          "name": "external_object_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"connect\".\"external_object\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"connect\".\"external_object\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_external_object_id": {
+          "name": "ck_external_object_id",
+          "value": "\"connect\".\"external_object\".\"id\" ~ '^ext_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_external_object_org": {
+          "name": "ck_external_object_org",
+          "value": "\"connect\".\"external_object\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_external_object_version": {
+          "name": "ck_external_object_version",
+          "value": "\"connect\".\"external_object\".\"version\" > 0"
+        },
+        "ck_external_object_kind": {
+          "name": "ck_external_object_kind",
+          "value": "\"connect\".\"external_object\".\"kind\" in ('issue','pull_request','review','discussion')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "connect.inbox": {
+      "name": "inbox",
+      "schema": "connect",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "installation_id": {
+          "name": "installation_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "delivery_id": {
+          "name": "delivery_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "repository_id": {
+          "name": "repository_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event": {
+          "name": "event",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "receipt": {
+          "name": "receipt",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ix_inbox_identity": {
+          "name": "ix_inbox_identity",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "installation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "delivery_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_inbox": {
+          "name": "pk_inbox",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "inbox_org_isolation": {
+          "name": "inbox_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"connect\".\"inbox\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"connect\".\"inbox\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_inbox_id": {
+          "name": "ck_inbox_id",
+          "value": "\"connect\".\"inbox\".\"id\" ~ '^inb_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_inbox_org": {
+          "name": "ck_inbox_org",
+          "value": "\"connect\".\"inbox\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_inbox_version": {
+          "name": "ck_inbox_version",
+          "value": "\"connect\".\"inbox\".\"version\" > 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "connect.integration": {
+      "name": "integration",
+      "schema": "connect",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "installation_id": {
+          "name": "installation_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active": {
+          "name": "active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ix_integration_identity": {
+          "name": "ix_integration_identity",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "installation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ix_integration_installation": {
+          "name": "ix_integration_installation",
+          "columns": [
+            {
+              "expression": "installation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_integration": {
+          "name": "pk_integration",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "integration_org_isolation": {
+          "name": "integration_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"connect\".\"integration\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"connect\".\"integration\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_integration_id": {
+          "name": "ck_integration_id",
+          "value": "\"connect\".\"integration\".\"id\" ~ '^int_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_integration_org": {
+          "name": "ck_integration_org",
+          "value": "\"connect\".\"integration\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_integration_version": {
+          "name": "ck_integration_version",
+          "value": "\"connect\".\"integration\".\"version\" > 0"
+        },
+        "ck_integration_provider": {
+          "name": "ck_integration_provider",
+          "value": "\"connect\".\"integration\".\"provider\" = 'github'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "connect.outbound_action": {
+      "name": "outbound_action",
+      "schema": "connect",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "integration_id": {
+          "name": "integration_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action_key": {
+          "name": "action_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_hash": {
+          "name": "request_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target": {
+          "name": "target",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lease_token": {
+          "name": "lease_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lease_until": {
+          "name": "lease_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retry_at": {
+          "name": "retry_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "result": {
+          "name": "result",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "ix_outbound_action_identity": {
+          "name": "ix_outbound_action_identity",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "action_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_outbound_action": {
+          "name": "pk_outbound_action",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "outbound_action_org_isolation": {
+          "name": "outbound_action_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"connect\".\"outbound_action\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"connect\".\"outbound_action\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_outbound_action_id": {
+          "name": "ck_outbound_action_id",
+          "value": "\"connect\".\"outbound_action\".\"id\" ~ '^act_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_outbound_action_org": {
+          "name": "ck_outbound_action_org",
+          "value": "\"connect\".\"outbound_action\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_outbound_action_version": {
+          "name": "ck_outbound_action_version",
+          "value": "\"connect\".\"outbound_action\".\"version\" > 0"
+        },
+        "ck_outbound_action_state": {
+          "name": "ck_outbound_action_state",
+          "value": "\"connect\".\"outbound_action\".\"state\" in ('pending','succeeded','failed','unknown')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "connect.outbox": {
+      "name": "outbox",
+      "schema": "connect",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "event_id": {
+          "name": "event_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event": {
+          "name": "event",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lease_token": {
+          "name": "lease_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lease_until": {
+          "name": "lease_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retry_at": {
+          "name": "retry_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "delivered_at": {
+          "name": "delivered_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "ix_outbox_identity": {
+          "name": "ix_outbox_identity",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_outbox": {
+          "name": "pk_outbox",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "outbox_org_isolation": {
+          "name": "outbox_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"connect\".\"outbox\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"connect\".\"outbox\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_outbox_id": {
+          "name": "ck_outbox_id",
+          "value": "\"connect\".\"outbox\".\"id\" ~ '^obx_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_outbox_org": {
+          "name": "ck_outbox_org",
+          "value": "\"connect\".\"outbox\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_outbox_version": {
+          "name": "ck_outbox_version",
+          "value": "\"connect\".\"outbox\".\"version\" > 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "connect.reconcile_cursor": {
+      "name": "reconcile_cursor",
+      "schema": "connect",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "integration_id": {
+          "name": "integration_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "repository_id": {
+          "name": "repository_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cursor": {
+          "name": "cursor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "high_watermark": {
+          "name": "high_watermark",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "ix_reconcile_cursor_identity": {
+          "name": "ix_reconcile_cursor_identity",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "integration_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "repository_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_reconcile_cursor": {
+          "name": "pk_reconcile_cursor",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "reconcile_cursor_org_isolation": {
+          "name": "reconcile_cursor_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"connect\".\"reconcile_cursor\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"connect\".\"reconcile_cursor\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_reconcile_cursor_id": {
+          "name": "ck_reconcile_cursor_id",
+          "value": "\"connect\".\"reconcile_cursor\".\"id\" ~ '^cur_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_reconcile_cursor_org": {
+          "name": "ck_reconcile_cursor_org",
+          "value": "\"connect\".\"reconcile_cursor\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_reconcile_cursor_version": {
+          "name": "ck_reconcile_cursor_version",
+          "value": "\"connect\".\"reconcile_cursor\".\"version\" > 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "connect.repository_binding": {
+      "name": "repository_binding",
+      "schema": "connect",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "integration_id": {
+          "name": "integration_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "repository_id": {
+          "name": "repository_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "team_id": {
+          "name": "team_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active": {
+          "name": "active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ix_repository_binding_identity": {
+          "name": "ix_repository_binding_identity",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "integration_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "repository_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "pk_repository_binding": {
+          "name": "pk_repository_binding",
+          "columns": ["id"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "repository_binding_org_isolation": {
+          "name": "repository_binding_org_isolation",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": ["public"],
+          "using": "\"connect\".\"repository_binding\".\"org_id\" = current_setting('fasrun.org_id',true)",
+          "withCheck": "\"connect\".\"repository_binding\".\"org_id\" = current_setting('fasrun.org_id',true)"
+        }
+      },
+      "checkConstraints": {
+        "ck_repository_binding_id": {
+          "name": "ck_repository_binding_id",
+          "value": "\"connect\".\"repository_binding\".\"id\" ~ '^rpb_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_repository_binding_org": {
+          "name": "ck_repository_binding_org",
+          "value": "\"connect\".\"repository_binding\".\"org_id\" ~ '^org_[0-9A-HJKMNP-TV-Z]{26}$'"
+        },
+        "ck_repository_binding_version": {
+          "name": "ck_repository_binding_version",
+          "value": "\"connect\".\"repository_binding\".\"version\" > 0"
+        }
+      },
+      "isRLSEnabled": true
+    }
+  },
+  "enums": {},
+  "schemas": {
+    "connect": "connect"
+  },
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
