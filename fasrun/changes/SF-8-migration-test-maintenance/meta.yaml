@@ -5,5 +5,7 @@ size: small
 template_version: 1
 layers:
   requirements:
-    status: in_review
+    status: approved
     pr: 84
+# PR #84 merged as 1a5ef105b84d6b998f9db2d4d37232a21eb4f961.
+# PontusAI approved c0875cf: pullrequestreview-5886630621.
